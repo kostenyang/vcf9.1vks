@@ -91,10 +91,20 @@ GET https://192.168.114.13/policy/api/v1/spec/openapi/nsx_policy_api.json
 ### VpcServiceGatewayConfig
 | 欄位 | 型別 | 備註 |
 |------|------|------|
-| enable | boolean | centralized 設 true |
-| edge_cluster_paths | [string] | **centralized 填 edge cluster；DTGW 留空（用 VNA）** |
-| nat_config | VpcNatConfig | |
+| enable | boolean | 啟用 service gateway（DTGW + Edge 都設 true）|
+| edge_cluster_paths | [string] | **Centralized 填 edge cluster；DTGW 留空（NSX 自動放到 VNA）** |
+| nat_config | VpcNatConfig | **「default outbound NAT」在這** |
 | qos_config | GatewayQosProfileConfig | |
+
+### VpcNatConfig（= UI 的 "default outbound NAT"）
+| 欄位 | 型別 | 備註 |
+|------|------|------|
+| enable_default_snat | boolean | 開 VPC pod 對外 SNAT |
+| auto_snat_ip_block | string | SNAT 用的 external IP block path |
+
+> **DTGW + VNA 的 attach**：把 VPC profile 的 `service_gateway` 設 `enable=true` +
+> `nat_config.enable_default_snat=true`（`edge_cluster_paths` 留空）。VNA cluster
+> （service_type=VPC_SERVICES）存在時，NSX 自動把每個 VPC 的 stateful service instance 放上去。
 
 ### DistributedVlanConnection（DTGW external connection）
 | 欄位 | 型別 | 必填 | 備註 |
