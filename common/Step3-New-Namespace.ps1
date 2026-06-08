@@ -4,9 +4,11 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\lab.ps1"
 Connect-Vc
 
-$sup = (Vc-Get '/api/vcenter/namespace-management/supervisors') | Where-Object { $_.config_status -eq 'RUNNING' } | Select-Object -First 1
-if (-not $sup) { Write-Host "✗ 沒有 RUNNING Supervisor，先跑 Step2。" -ForegroundColor Red; exit 1 }
-Write-Host "Supervisor: $($sup.supervisor)"
+# 注意：GET /supervisors 在 9.1 回 404，要用 /supervisors/summaries（items[].supervisor / items[].info.config_status）
+$sum = (Vc-Get '/api/vcenter/namespace-management/supervisors/summaries').items | Where-Object { $_.info.config_status -eq 'RUNNING' } | Select-Object -First 1
+if (-not $sum) { Write-Host "✗ 沒有 RUNNING Supervisor，先跑 Step2。" -ForegroundColor Red; exit 1 }
+$supId = $sum.supervisor
+Write-Host "Supervisor: $supId  ($($sum.info.name) @ $($sum.info.APIEndpoint))"
 
 try { $ex = Vc-Get "/api/vcenter/namespaces/instances/$NS_NAME"; Write-Host "✓ namespace '$NS_NAME' 已存在 ($($ex.config_status))，跳過。" -ForegroundColor Green; exit 0 } catch {}
 
@@ -16,7 +18,7 @@ if (-not $pol) { $pol = $pols.value | Select-Object -First 1 }
 
 $body = @{
     namespace  = $NS_NAME
-    supervisor = $sup.supervisor
+    supervisor = $supId
     storage_specs = @(@{ policy=$pol.policy; limit=204800 })
     access_list   = @(@{ subject_name='administrator'; subject_type='USER'; domain='vsphere.local'; role='EDIT' })
 }

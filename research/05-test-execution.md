@@ -111,13 +111,55 @@ httpStatus: BAD_REQUEST  error_code: 520001
 > Tip：UI dropdown 用瀏覽器自動化時，Clarity combobox 用 form_input(ref) 設值最穩；
 > Network/VPC-profile 這種要真的從清單點選或 form_input 才會註冊驗證。
 
+## Namespace + VKS cluster（DTGW 路線，實測成功 2026-06-08）
+
+Supervisor RUNNING（API endpoint `192.168.114.132`）後，實際建出 namespace 與 VKS guest cluster。
+
+### Namespace `vks-automation`
+- 建法：UI `Workload Management → Supervisor → Namespaces → New Namespace`（或 `Step3-New-Namespace.ps1`）。
+- 配 storage policy `Management Storage Policy - Single Node` + access（administrator@vsphere.local EDIT）。
+- ✅ **NSX VPC 自動建**：namespace RUNNING 後，NSX 在 default project 下自動生出該 namespace 的 VPC（用我們的 `vcf-m02-vks-vpc-profile`）→ 證明 DTGW 連線端到端通。
+- VM classes（`best-effort-small` 2vCPU/4GB、`best-effort-medium` 2/8）+ storage classes（`management-storage-policy-*`）自動帶進 namespace。
+
+### 🐞 真 bug：VKS cluster 要「兩個」content library，少一個就建不起來
+第一次 `kubectl apply` cluster 被 admission webhook 退：
+```
+admission webhook "default.tkr-resolver.run.tanzu.vmware.com" denied the request:
+Could not resolve KR/OSImage. Missing compatible KR/OSImage … osImageSelector: os-name=photon
+```
+**原因**：Supervisor 只掛了 **Supervisor image library**（`/supervisor/v1/latest/lib.json`，給 CP/spherelet），
+**缺 TKG node-image library**（guest cluster 節點的 Photon/Ubuntu OVA 來源）。
+**修正**：另建一個 subscribed library 指 `https://wp-content.vmware.com/v2/latest/lib.json`，
+在 `Configure → Kubernetes Service → ADD` 指派給 Supervisor。sync 完（本 lab 123 items）後：
+```
+kubectl get kubernetesrelease -n vks-automation   # 出現 COMPATIBLE=True 的版本
+kubectl get osimage          -n vks-automation   # 對應的 photon/ubuntu OVA（vmi-…）
+```
+> 兩個 library 並存時，cluster spec 的 `version:` 一定要對齊「COMPATIBLE=True 且有對應 photon osimage」的版本。
+> 本 lab 實測：compatible KR = `v1.33.1` / `v1.34.2`；v1.34.2 有 photon osimage → 用 v1.34.2。
+
+### cluster spec 對齊（實測可建的組合）
+| 欄位 | 值 | 備註 |
+|------|----|------|
+| classRef | `builtin-generic-v3.6.0`（ns `vmware-system-vks-public`）| VKS 3.x ClusterClass |
+| version | `v1.34.2` | 要對齊 compatible KR + 有 photon osimage |
+| vmClass | `best-effort-small` | 用 namespace 內實際有的 class（不是猜的 guaranteed-small）|
+| storageClass | `management-storage-policy-single-node` | |
+| CP / worker | 1 / 1 | nested 資源有限，先各 1 台 |
+
+→ `kubectl apply -f common/vks-cluster.yaml` 通過，cluster `vks-auto-01` 進 Provisioning：
+`cluster` PHASE=Provisioned、2 個 machine（CP + node-pool worker）開始部 VM。
+
+> kubectl + kubectl-vsphere plugin 來源：`https://<sup-vip>/wcp/plugin/windows-amd64/vsphere-plugin.zip`。
+> 登入：`kubectl vsphere login --server=192.168.114.132 -u administrator@vsphere.local --insecure-skip-tls-verify`。
+
+---
+
 ## 尚未執行（重部署，等決定）
 
 | 動作 | 原因 |
 |------|------|
-| VNA cluster 實際部署（Path A）| 會部 VM、要填 cluster/datastore/PG moref + IP；建議 UI 部一台再 GET 對照，或補齊 moref 後跑 Step1 |
 | Edge cluster 實際部署（Path B）| 部 2 台 edge VM、30–60 分鐘、吃 nested 資源；且與 Path A 共用 default project TGW（互斥）|
-| Supervisor 啟用（Step2）| 等上面網路就緒 + TKG content library 後 |
 
 > 兩條重部署互斥（同一個 default project 只有一個 TGW）。要兩條都實測，建議：
 > 先完整跑 A → 截圖/驗證 → 清掉 → 再跑 B；或 Path B 另開 NSX Project。

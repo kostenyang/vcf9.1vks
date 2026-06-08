@@ -17,10 +17,11 @@ Connect-Vc
 if (-not $VpcProfileId) { $VpcProfileId = $VPC_PROFILE_ID }
 
 # ── 已啟用就跳過 ──────────────────────────────────────────────────────────────
-$sups = Vc-Get '/api/vcenter/namespace-management/supervisors/summaries'
-if ($sups | Where-Object { $_.config_status -eq 'RUNNING' }) {
+# /supervisors/summaries 回 { items:[ { supervisor, info:{ config_status, name, APIEndpoint } } ] }
+$sups = (Vc-Get '/api/vcenter/namespace-management/supervisors/summaries').items
+if ($sups | Where-Object { $_.info.config_status -eq 'RUNNING' }) {
     Write-Host "已有 RUNNING Supervisor，跳過。直接 Step3。" -ForegroundColor Green
-    $sups | ForEach-Object { Write-Host "  $($_.supervisor)  $($_.config_status)" }
+    $sups | ForEach-Object { Write-Host "  $($_.supervisor)  $($_.info.config_status)  $($_.info.APIEndpoint)" }
     exit 0
 }
 
