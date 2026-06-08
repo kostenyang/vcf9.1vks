@@ -50,18 +50,14 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 
 ## 4. 啟用 Supervisor（vCenter）
 
-`右鍵 vcf-m02-cl01 → Activate Supervisor`（或 Workload Management → Get Started）
-1. Deployment：Single cluster，Supervisor name `vcf-m02-supervisor`，cluster `vcf-m02-cl01`
-2. Networking：**VCF Networking with VPC**
-   - NSX Project：`default`
-   - VPC Connectivity Profile：`vcf-m02-vks-vpc-profile`（DTGW 那個）
-3. Storage：`Management Storage Policy - Single Node`（FTT=0）
-4. Sizing：Small
-5. Management Network：Static，起始 IP `192.168.114.101`、mask `255.255.255.0`、gateway `.254`、
-   DNS/NTP `192.168.114.200`、search domain `rtolab.local`
-6. Workload Network：Service CIDR `10.96.0.0/23`、Default Private CIDR `172.30.0.0/24`
-7. Content Library：TKG subscribed library（`https://wp-content.vmware.com/supervisor/v1/latest/lib.json`）
-8. Review → Finish，等 30–60 分鐘到 **Running**
+`Workload Management → Get Started`（實機驗證的 7 步 wizard，詳細截圖見 [../screenshots/README.md](../screenshots/README.md)）
+1. **vCenter Server and Network**：vCenter 選 KOSTEN-VCF91-VC；networking stack 選 **VCF Networking with VPC**（只有 VPC / VDS 兩個選項，**無 NSX classic**）
+2. **Supervisor location**：tab 選 **CLUSTER DEPLOYMENT**；Supervisor name `vcf-m02-supervisor`；左樹**先點 datacenter `vcf-m02-dc`** 才會在 COMPATIBLE 列出 `vcf-m02-cl01` → 選它
+3. **Storage**：Control Plane / Ephemeral Disks / Image Cache 三個都選 `Management Storage Policy - Single Node`（FTT=0）
+4. **Management Network**：Static，起始 IP `192.168.114.101`、mask `255.255.255.0`、gateway `.254`、DNS/NTP `192.168.114.200`、search domain `rtolab.local`
+5. **Workload Network**：NSX Project `default`、VPC Connectivity Profile **`vcf-m02-vks-vpc-profile`（DTGW 那個）**、Service CIDR `10.96.0.0/23`、Default Private CIDR `172.30.0.0/24`
+6. **Advanced Settings**：Content Library 指定 TKG subscribed library（`https://wp-content.vmware.com/supervisor/v1/latest/lib.json`）、Control Plane Size **Small**
+7. **Ready to complete**：Review → **FINISH**，等 30–60 分鐘到 **Running**
 
 ---
 

@@ -111,6 +111,7 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 | [research/03-edge-ctgw-research.md](research/03-edge-ctgw-research.md) | Edge cluster + centralized TGW 研究 |
 | [research/04-nsx-schemas.md](research/04-nsx-schemas.md) | 從 NSX 9.1 live OpenAPI 撈的真實 schema 參考 |
 | [research/05-test-execution.md](research/05-test-execution.md) | 實測執行紀錄：DryRun、已建資源、抓到的 /26 邊界 bug |
+| [screenshots/README.md](screenshots/README.md) | **實機 UI walkthrough**：live vCenter Activate Supervisor wizard 逐步（7 步）驗證 |
 
 ---
 
