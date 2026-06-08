@@ -23,7 +23,7 @@ $global:DNS_SEARCH      = @('rtolab.local')
 $global:SERVICE_CIDR    = '10.96.0.0'
 $global:SERVICE_PREFIX  = 23
 
-$global:EXT_IPBLOCK_CIDR = '192.168.114.108/26' # external (public/LB/SNAT)
+$global:EXT_IPBLOCK_CIDR = '192.168.114.128/26' # external (public/LB/SNAT); /26 必須對齊邊界 .0/.64/.128/.192
 $global:PRIV_TGW_CIDR    = '172.30.0.0/16'      # private TGW block (VKS 要 /16)
 $global:VPC_PRIVATE_CIDR = '172.30.0.0'
 $global:VPC_PRIVATE_PREFIX = 24

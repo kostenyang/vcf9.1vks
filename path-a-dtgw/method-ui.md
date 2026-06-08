@@ -7,7 +7,7 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 ## 1. External / Private IP Block（NSX Manager）
 
 `Networking → IP Address Pools → IP Address Blocks → ADD`
-- **External block**：Name `vcf-m02-vks-ext-ipblock`、CIDR `192.168.114.108/26`、Visibility **External**
+- **External block**：Name `vcf-m02-vks-ext-ipblock`、CIDR `192.168.114.128/26`、Visibility **External**
 - **Private TGW block**：Name `vcf-m02-vks-priv-tgw`、CIDR `172.30.0.0/16`、Visibility **Private**
 
 ---
@@ -39,7 +39,7 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 
 `vCenter → Networking → Network Connectivity → Configure Network Connectivity → Distributed Connectivity`
 - VLAN ID：`114`
-- Gateway CIDR：external connection 的 gateway（如 `192.168.114.108/26` 的 gateway）
+- Gateway CIDR：external connection 的 gateway（如 `192.168.114.128/26` 的 gateway）
 - External IP Block：`vcf-m02-vks-ext-ipblock`
 - Private Transit Gateway IP Block：`vcf-m02-vks-priv-tgw`（/16）
 - 連線型態：**Distributed VLAN Connection**

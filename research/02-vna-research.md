@@ -85,7 +85,7 @@ cli_username / cli_password / root_password / audit_username / audit_password
 1. **External IP Block**（infra-level，給 VPC 配 public/LB/SNAT IP）
    ```
    PATCH /policy/api/v1/infra/ip-blocks/{id}
-   { "resource_type":"IpAddressBlock", "cidr":"192.168.114.108/26", "visibility":"EXTERNAL" }
+   { "resource_type":"IpAddressBlock", "cidr":"192.168.114.128/26", "visibility":"EXTERNAL" }
    ```
 
 2. **VNA cluster + node**（PUT cluster，再 PUT node 為 child）

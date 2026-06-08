@@ -55,7 +55,7 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 |------|----|-----------|
 | Supervisor CP VMs (5 IPs) | `192.168.114.101–105` | ✅ |
 | Supervisor mgmt gateway | `192.168.114.254` | ✅ |
-| NSX External IP Block（public/LB/SNAT 來源）| `192.168.114.108/26`（.108–.171）| ✅ |
+| NSX External IP Block（public/LB/SNAT 來源）| `192.168.114.128/26`（.128–.191）| ✅ |
 | Private TGW IP Block（VKS 要求 /16）| `172.30.0.0/16` | ✅ |
 | Supervisor Service CIDR (K8s ClusterIP) | `10.96.0.0/23` | ✅ |
 | VKS cluster Pod CIDR（per cluster）| `192.168.0.0/16` | ✅ |
@@ -110,6 +110,7 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 | [research/02-vna-research.md](research/02-vna-research.md) | VNA cluster 部署研究（含 live OpenAPI schema）|
 | [research/03-edge-ctgw-research.md](research/03-edge-ctgw-research.md) | Edge cluster + centralized TGW 研究 |
 | [research/04-nsx-schemas.md](research/04-nsx-schemas.md) | 從 NSX 9.1 live OpenAPI 撈的真實 schema 參考 |
+| [research/05-test-execution.md](research/05-test-execution.md) | 實測執行紀錄：DryRun、已建資源、抓到的 /26 邊界 bug |
 
 ---
 
