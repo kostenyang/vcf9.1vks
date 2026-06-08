@@ -38,7 +38,7 @@ VKS NAT 只在 T0 Active/Standby 下有效。本路線部 T0 一律設 `ACTIVE_S
 | Edge TEP VLAN | `117` |
 | Uplink VLAN | `114` |
 | T0 routing | STATIC（default route → `192.168.114.254`）|
-| External IP block | `192.168.114.108/26` |
+| External IP block | `192.168.114.128/26` |
 | Private TGW block | `172.30.0.0/16` |
 | Supervisor CP | `192.168.114.101–105` |
 

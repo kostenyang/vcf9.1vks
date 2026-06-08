@@ -120,7 +120,7 @@ PATCH /policy/api/v1/infra/ip-blocks/{id}
 {
   "resource_type": "IpAddressBlock",
   "display_name": "...",
-  "cidr": "192.168.114.108/26",
+  "cidr": "192.168.114.128/26",
   "visibility": "EXTERNAL"        ← external block 用 EXTERNAL；private TGW block 用 PRIVATE
 }
 ```

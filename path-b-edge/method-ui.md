@@ -21,7 +21,7 @@ Tier-0 + centralized TGW 一次部完。
 - Tier-0：**Active/Standby**、routing **STATIC**（default route → `192.168.114.254`）
   - （若要 BGP：填 local ASN + peer ASN/IP，本 lab 用 STATIC 即可）
 
-External IP block：`192.168.114.108/26`；Private TGW block：`172.30.0.0/16`（/16）。
+External IP block：`192.168.114.128/26`；Private TGW block：`172.30.0.0/16`（/16）。
 
 > 替代：NSX Manager UI `System → Fabric → Nodes → Edge Transport Nodes → Add Edge Node`
 > 手動部 2 台再建 edge cluster；T0 在 `Networking → Tier-0 Gateways → ADD`（HA Active/Standby）。

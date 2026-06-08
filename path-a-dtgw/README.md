@@ -32,7 +32,7 @@ Service type=LoadBalancer）和 SNAT（pod 連外）。VCF 9.1 的 **VNA cluster
 
 | 用途 | 值 |
 |------|----|
-| External IP block | `192.168.114.108/26` |
+| External IP block | `192.168.114.128/26` |
 | Private TGW block | `172.30.0.0/16` |
 | Supervisor CP | `192.168.114.101–105` |
 | VNA cluster | `vcf-m02-vna-01`（SMALL，service_type=VPC_SERVICES）|
