@@ -22,7 +22,8 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 
 1. **Add Cluster** 頁：
    - Cluster Name：`vcf-m02-vna-01`
-   - Node Form Factor：下拉 **Small**（2vCPU/4GB）/ Medium（4/8）/ Large（8/32）/ Extra Large（16/64）。lab 選 **Small**。
+   - Node Form Factor：下拉 Small（2vCPU/4GB）/ **Medium（4/8）** / Large（8/32）/ Extra Large（16/64）。
+     ⚠️ **必須選 Medium 以上** —— 官方要求啟用 vSphere Supervisor 的 VNA 最小是 Medium，**Small 不支援**（實測踩過：先部 Small 要砍掉重部 Medium）。
    - 「Minimum one Virtual Network Appliance is required」→ 按 **ADD** 加 node。
    - NOTE：密碼由 SDDC Manager 自動產生/管理（不用自己填）。
 2. **Add Node** 對話框（下拉自動帶 moref，不用查 ID）：
