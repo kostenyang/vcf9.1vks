@@ -1,0 +1,4 @@
+requests>=2.31
+PyYAML>=6.0
+# step4 用 --client 才需要（否則走 kubectl）：
+kubernetes>=29.0
