@@ -1,0 +1,13 @@
+# kubeconfig / kube state
+*.kubeconfig
+.kube/
+kubeconfig*
+
+# 大檔 / 暫存
+_nsx_policy_openapi.json
+*.tmp
+*.log
+
+# Windows
+Thumbs.db
+desktop.ini
