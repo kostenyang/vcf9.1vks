@@ -4,9 +4,25 @@
 (`kosten-vcf91-vc.rtolab.local`) 上啟用 **vSphere Supervisor / VKS (vSphere Kubernetes Service)**，
 給 automation 建立可用的 Kubernetes cluster。
 
-兩條網路路線、每條三種方法（API / UI / Script）都涵蓋。
+兩條網路路線，**四種方法（UI / API / Python / PowerShell）**都涵蓋。
 
-> ⚠️ 本 repo 為私有 lab 用途，內含明文 lab 密碼（`VMware1!VMware1!`）。正式環境請改掉。
+> ✅ **2026-06-08 實機跑通**：Path A（DTGW+VNA）端到端啟 Supervisor → 建 namespace →
+> 建 VKS cluster `vks-auto-01`（v1.34.2，CP+worker 都 Ready）。踩坑與修正見
+> [research/05](research/05-test-execution.md)。
+
+> ⚠️ 本 repo 為私有 lab 用途，內含明文 lab 密碼（`VMware1!VMware1!`）。正式環境請改掉
+> （Python 的 `python/lab.py` 已支援用環境變數覆寫）。
+
+---
+
+## 四種方法（起 VKS）
+
+| 方法 | 在哪 | 說明 |
+|------|------|------|
+| **UI**（畫面）| [`path-a-dtgw/method-ui.md`](path-a-dtgw/method-ui.md)、[`screenshots/`](screenshots/) | 實機 7 步 wizard + 乾淨截圖（Supervisor/Namespace/Content Library/VNA）|
+| **API**（raw REST）| [`API.md`](API.md) | 語言無關 curl：vCenter `/api`、NSX `/policy/api/v1`、Supervisor kube API |
+| **Python** | [`python/`](python/) | `lab.py` + `step1~4`，`requests` 打 REST，cluster 用 kubectl / kubernetes client |
+| **PowerShell** | [`common/Step*.ps1`](common/)、[`path-a-dtgw/Step1-Setup-DTGW.ps1`](path-a-dtgw/Step1-Setup-DTGW.ps1) | PowerCLI + REST，`-DryRun` 支援 |
 
 ---
 

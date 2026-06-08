@@ -168,6 +168,43 @@ CIDR 是 immutable → **刪掉 cluster 重建**。重建後 CP VM 因 image cac
 > （管理網 192.168.114.0/24 + VPC 172.28/29/30）。預設 Calico pod CIDR `192.168.0.0/16` 在
 > 用 192.168.x 管理網的 lab 幾乎必撞，是經典坑。
 
+### 🐞 第二個坑：nested 太慢，MHC `nodeStartupTimeout=3600s` 在 CP init 完成前把它砍掉
+改完 pod CIDR 重建後，CP VM 起來、拿到 IP `172.28.0.34`、**egress 完全正常**
+（NSX SNAT 統計實測：node 送了 99,960 封包 / 144MB 出去拉 image；從 host ping SNAT IP `.134` 也通），
+但 image 拉完後 **etcd/apiserver 在 nested best-effort CPU 上 bootstrap 太慢**，apiserver(6443) 一直沒起來。
+預設 control-plane MHC `nodeStartupTimeoutSeconds=3600`（60min）會在它 converge 前判不健康 → 又砍 → loop。
+
+- 本 lab **沒有任何 guaranteed vmclass**（只有 `best-effort-small/medium`）→ 沒法給 guest CP 保留 CPU。
+- 直接 patch MHC 物件被擋：`User ... cannot patch resource "machinehealthchecks"`（VKS RBAC）。
+- 設 Machine annotation `skip-remediation` 也被擋：「can only modify the 'remediate-machine' annotation」。
+
+**修正**：從 **cluster topology 覆寫** MHC（不用直接 patch MHC 物件）：
+```yaml
+spec:
+  topology:
+    controlPlane:
+      replicas: 1
+      healthCheck:
+        checks:
+          nodeStartupTimeoutSeconds: 14400   # 4h，給慢的 nested CP 足夠時間
+```
+> 欄位名是 `healthCheck`（不是 machineHealthCheck），CAPI `v1beta2`。
+> 套用後 `kubectl get mhc` 的 control-plane MHC = `14400s`，worker 仍預設 3600s。
+
+### ✅ 最終結果：VKS cluster 起來了（2026-06-08）
+pod CIDR `100.96.0.0/11` + MHC 4h 重建後，**~36 分鐘 CP converge**：
+```
+NAME                        STATUS   ROLES           VERSION
+vks-auto-01-7f6ms-fmgz9     Ready    control-plane   v1.34.2+vmware.2   (172.28.0.2, Photon OS, containerd 2.1.5-fips)
+vks-auto-01-node-pool-1-... Ready    <none>          v1.34.2+vmware.2   (172.28.0.3)
+```
+- KCP `Initialized=true / Available=true`；cluster `CP AVAILABLE=1 / W AVAILABLE=1`。
+- guest cluster 20 個 system pod 全 Running。
+- kubeconfig：`kubectl-vsphere login --server=192.168.114.132 --tanzu-kubernetes-cluster-name=vks-auto-01 --tanzu-kubernetes-cluster-namespace=vks-automation`
+  → `kubectl config view --flatten --minify --context=vks-auto-01 > vks-auto-01.kubeconfig`。
+
+> 之前 90min「失敗」其實是 **慢到被 MHC 提早砍**，不是配置死結。兩個修正（CIDR + MHC）一起才過。
+
 > kubectl + kubectl-vsphere plugin 來源：`https://<sup-vip>/wcp/plugin/windows-amd64/vsphere-plugin.zip`。
 > 登入：`kubectl vsphere login --server=192.168.114.132 -u administrator@vsphere.local --insecure-skip-tls-verify`。
 
