@@ -224,7 +224,136 @@ add_text(slide, '所有 Step*.ps1 支援 -DryRun（印 payload 不送出）',
          Inches(0.3), Inches(6.7), Inches(12.7), Inches(0.5),
          font_size=13, bold=False, color=RGBColor(0x55, 0x55, 0x55))
 
-# ─── SLIDE 7 — Supervisor Running 截圖 ───────────────────────────────────────
+# ─── SLIDE 7 — NSX IP Address Blocks ─────────────────────────────────────────
+slide = content_slide('NSX 前置設定：IP Address Blocks')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '40-nsx-ip-blocks.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+notes = [
+    'External Block（SNAT/LB 來源）',
+    '  vcf-m02-vks-ext-ipblock',
+    '  192.168.114.128/26',
+    '  /26 邊界對齊！(.128,.192,.0)',
+    '',
+    'Private TGW Block（VKS 必要）',
+    '  vcf-m02-vks-priv-tgw',
+    '  172.30.0.0/16',
+    '  /16 硬規定',
+    '',
+    '(系統預設 default--kube-s...',
+    '  172.28.0.0/16 勿動)',
+]
+y = Inches(1.3)
+for n in notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.32),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.37)
+
+# ─── SLIDE 8 — NSX VPC Connectivity Profile ───────────────────────────────────
+slide = content_slide('NSX 前置設定：VPC Connectivity Profile')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '41-nsx-vpc-profiles.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+notes2 = [
+    'vcf-m02-vks-vpc-profile',
+    '  Transit Gateway:',
+    '    Default Transit Gateway',
+    '    (DTGW / distributed)',
+    '',
+    '  External IP Blocks:',
+    '    vcf-m02-vks-ext-ipblock',
+    '',
+    '  Private TGW IP Blocks:',
+    '    vcf-m02-vks-priv-tgw',
+    '',
+    '  Status: Success ✅',
+]
+y = Inches(1.3)
+for n in notes2:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.32),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.37)
+
+# ─── SLIDE 9 — Supervisor Configure Network (Management) ──────────────────────
+slide = content_slide('Supervisor Configure — 管理網路（Management Network）')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '43-vc-sup-configure-network-mgmt.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+mgmt_notes = [
+    'IP Assignment Mode: Static',
+    'Network: vcf-m02-cl01-vds01-pg-mgmt',
+    'Starting IP: 192.168.114.101',
+    '  (5 IPs → .101 ~ .105)',
+    'Subnet Mask: 255.255.255.0',
+    'Gateway: 192.168.114.254',
+    'DNS: 192.168.114.200',
+    'DNS Domain: rtolab.local',
+    'NTP: 192.168.114.200',
+]
+y = Inches(1.3)
+for n in mgmt_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.35),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.38)
+
+# ─── SLIDE 10 — Supervisor Configure Network (Workload) ───────────────────────
+slide = content_slide('Supervisor Configure — 工作負載網路（Workload Networks）')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '43b-vc-sup-configure-network-workload.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+wl_notes = [
+    'NSX Project: Default',
+    'VPC Connectivity Profile:',
+    '  vcf-m02-vks-vpc-profile',
+    '',
+    'External IP Blocks:',
+    '  vcf-m02-vks-ext-ipblock',
+    '  192.168.114.128/26',
+    '  Usage: 12.5%',
+    '',
+    'Private TGW IP Blocks:',
+    '  vcf-m02-vks-priv-tgw',
+    '  172.30.0.0/16',
+    '  Usage: 0.02%',
+]
+y = Inches(1.3)
+for n in wl_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.32),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.37)
+
+# ─── SLIDE 11 — Supervisor Configure Storage ──────────────────────────────────
+slide = content_slide('Supervisor Configure — 儲存設定（Storage）')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '44-vc-sup-configure-storage.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+stor_notes = [
+    'Control Plane Nodes:',
+    '  Management Storage',
+    '  Policy - Single Node',
+    '  (FTT=0, nested OK)',
+    '',
+    'Ephemeral Disks:',
+    '  同上',
+    '',
+    'Image Cache:',
+    '  同上',
+    '',
+    '⚠️ 生產環境建議用 FTT=1+',
+    '  (此為 lab single-node)',
+]
+y = Inches(1.3)
+for n in stor_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.32),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.37)
+
+# ─── SLIDE 12 — Supervisor Running 截圖 ───────────────────────────────────────
 slide = content_slide('Supervisor 運行狀態')
 add_image_safe(slide,
                os.path.join(SCREENSHOTS, '30-supervisor-running.jpg'),
@@ -442,7 +571,7 @@ links = [
     'research/05-test-execution.md  →  踩坑與修正完整紀錄',
     'python/  →  Step1~4 Python 腳本（requests + kubernetes client）',
     'common/vks-cluster.yaml  →  ClusterClass CR（含 Pod CIDR + MHC 修正）',
-    'screenshots/  →  37 張實機截圖',
+    'screenshots/  →  32 張實機截圖（含 NSX + Supervisor Configure 前置設定）',
 ]
 y = Inches(4.5)
 for link in links:

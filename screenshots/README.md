@@ -118,6 +118,29 @@ Supervisor 控制平面 VM 的管理網路：
 
 ---
 
+# NSX Manager 前置設定截圖（2026-06-08）
+
+Step 1 所建 NSX 資源（IP blocks、VPC Connectivity Profile）的運行狀態截圖。
+
+| 檔 | 對應 | 重點欄位 |
+|----|------|----------|
+| [`40-nsx-ip-blocks.jpg`](40-nsx-ip-blocks.jpg) | NSX → VPCs → IP Management → IP Address Blocks | **3 個 block**：`vcf-m02-vks-ext-ipblock`（EXTERNAL 192.168.114.128/26）、`vcf-m02-vks-priv-tgw`（PRIVATE 172.30.0.0/16）、系統預設 `default--kube-s...`（PRIVATE 172.28.0.0/16）；全部 Status = Success |
+| [`41-nsx-vpc-profiles.jpg`](41-nsx-vpc-profiles.jpg) | NSX → VPCs → Profiles → VPC Connectivity Profile | **vcf-m02-vks-vpc-profile**：Transit Gateway = Default Transit Gateway（DTGW）、External IP Blocks = `vcf-m02-vks-ext-ipblock`、Private TGW IP Blocks = `vcf-m02-vks-priv-tgw`；Status = Success |
+
+---
+
+# Supervisor Configure 設定截圖（2026-06-08）
+
+vCenter → vcf-m02-supervisor → Configure 的完成狀態（已部署後的設定檢視）。
+
+| 檔 | 對應 | 重點欄位 |
+|----|------|----------|
+| [`43-vc-sup-configure-network-mgmt.jpg`](43-vc-sup-configure-network-mgmt.jpg) | Supervisor → Configure → Network → Management Network | IP Assignment Mode = Static、Network = `vcf-m02-cl01-vds01-pg-mgmt`、**Starting IP = 192.168.114.101**（連續 5 個 .101–.105）、Subnet = 255.255.255.0、Gateway = 192.168.114.254、DNS/NTP = 192.168.114.200、Domain = rtolab.local |
+| [`43b-vc-sup-configure-network-workload.jpg`](43b-vc-sup-configure-network-workload.jpg) | Supervisor → Configure → Network → Workload Networks | NSX Project = Default、**VPC Connectivity Profile = vcf-m02-vks-vpc-profile**、External IP Blocks（vcf-m02-vks-ext-ipblock 192.168.114.128/26 Usage 12.5%）、Private TGW IP Blocks（vcf-m02-vks-priv-tgw 172.30.0.0/16 Usage 0.02%）|
+| [`44-vc-sup-configure-storage.jpg`](44-vc-sup-configure-storage.jpg) | Supervisor → Configure → Storage | Control Plane Nodes / Ephemeral Disks / Image Cache 三個 policy 全選 **Management Storage Policy - Single Node**（FTT=0，lab 用）|
+
+---
+
 # 實機「完成狀態」截圖（乾淨重 cut，2026-06-08）
 
 Supervisor 已 RUNNING、namespace 已建、VKS cluster 已建（DTGW 路線端到端跑通）後，
