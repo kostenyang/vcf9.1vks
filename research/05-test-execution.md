@@ -49,6 +49,19 @@ httpStatus: BAD_REQUEST  error_code: 520001
 
 ---
 
+## Content Library（已建好，實測踩到 thumbprint 坑）
+
+- 目標：subscribed library 訂 `https://wp-content.vmware.com/supervisor/v1/latest/lib.json`（Supervisor image 來源）。
+- **第一次 API 失敗**：`RESOURCE_INACCESSIBLE / Connection to VCSP server failed` —— 誤判成 egress 不通。
+- **真因**：REST API 建 subscribed library **沒帶 `ssl_thumbprint`**，vCenter 無法驗證對方憑證。
+  UI 流程會跳「Security Alert」憑證信任視窗（按 Yes 即過）證明 **egress 其實是通的**。
+- **修正**：腳本自動抓 SSL thumbprint（實測 `B6:49:37:52:8A:...`）塞進 spec → 成功。
+- 結果：`tkg-content-library`（SUBSCRIBED）sync 後 **7 個 item**
+  （`supervisor-9.0.0`/`9.0.2` OVF、`spherelet-v1.28`～`v1.32`）。
+- 兩種方法都驗過：UI（5 步 wizard，按 YES 信任憑證）、Script（`Step1b-Create-ContentLibrary.ps1`，自動 thumbprint）。
+
+詳見 [../common/content-library.md](../common/content-library.md)。
+
 ## 尚未執行（重部署，等決定）
 
 | 動作 | 原因 |
