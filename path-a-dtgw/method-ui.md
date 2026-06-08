@@ -17,21 +17,31 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 **NSX Manager**：`System → Fabric → VNA Cluster → ADD`
 （或 vCenter `Configure → Networking → VNA Clusters`）
 
-1. **建 cluster**：名稱 `vcf-m02-vna-01`、form factor `SMALL`、service type **VPC Services**、
-   overlay transport zone 選 overlay TZ。
-2. **ADD 第一台 VNA node**：
-   - FQDN：`vcf-m02-vna01.rtolab.local`
-   - Compute Manager：選 inner vCenter
-   - Cluster：`vcf-m02-cl01`
-   - Datastore：vSAN datastore
-   - Management port group：VLAN 114 PG（`selab-dswitch-pg114` 或對應 segment）
-   - Management network：Static，IP 從 mgmt 段挑一個未用的（如 `192.168.114.106`）/mask/gateway `.254`
-   - 密碼：`VMware1!VMware1!`
-3. （要 HA）**CLONE** 第二台：只填 FQDN + IP（如 `.107`）。
-4. 部署，等狀態 **Up / Success**。
+實機路徑（2026-06-08 驗證）：NSX Manager `System → Fabric → VNA Clusters → ADD CLUSTER`
+（或 System Overview 點 "Virtual Network Appliance Clusters" 計數進去）。
 
-> 在這裡用 UI 部一台後，可 `GET .../virtual-network-appliances/<id>` 把真實 body 撈出來，
-> 回填到 `Step1-Setup-DTGW.ps1` 的 placeholder（moref / ip_assignment_specs）。
+1. **Add Cluster** 頁：
+   - Cluster Name：`vcf-m02-vna-01`
+   - Node Form Factor：下拉 **Small**（2vCPU/4GB）/ Medium（4/8）/ Large（8/32）/ Extra Large（16/64）。lab 選 **Small**。
+   - 「Minimum one Virtual Network Appliance is required」→ 按 **ADD** 加 node。
+   - NOTE：密碼由 SDDC Manager 自動產生/管理（不用自己填）。
+2. **Add Node** 對話框（下拉自動帶 moref，不用查 ID）：
+   - Node Name (FQDN)：`vcf-m02-vna01.rtolab.local`
+   - Compute Manager：`kosten-vcf91-vc.rtolab.local`
+   - vSphere Cluster：`vcf-m02-cl01`
+   - Data Store：`vcf-m02-cl01-ds-vsan01`
+   - Management Network：IP Assignment 選 **Static**
+     - Management CIDR：`192.168.114.106/24`（輸入後按 Enter 變 chip）
+     - Default Gateway：`192.168.114.254`（同樣按 Enter 變 chip）← 兩個都變 chip 後 APPLY 才會亮
+     - Port Group：`vcf-m02-cl01-vds01-pg-mgmt`（自動帶）
+   - **APPLY**
+3. 回 Add Cluster 頁，node 列表出現該 node → **SAVE** 開始部署。
+4. VNA Clusters 清單：Status **In Progress**（橘）→ 等 OVA 部署 + 開機 + 註冊（nested 約 15–30 分鐘）→ **Up / Success**。
+5. （要 HA）再 **ADD** 或 **CLONE** 第二台（`.107`）。
+
+> 實機驗證：UI 建出來的物件 = `appliance_form_factor=SMALL`、`service_type=VPC_SERVICES`，
+> 與 [`Step1-Setup-DTGW.ps1`](Step1-Setup-DTGW.ps1) 反推的 schema 一致。
+> Poll 狀態：`GET /policy/api/v1/infra/sites/default/enforcement-points/default/virtual-network-appliance-clusters`
 
 ---
 
