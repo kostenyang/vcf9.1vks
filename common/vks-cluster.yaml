@@ -5,10 +5,13 @@ metadata:
   namespace: vks-automation
 spec:
   clusterNetwork:
+    # ⚠️ pod CIDR 不可與 lab 管理網段 192.168.114.0/24（Supervisor API .132 / DNS+NTP .200 / gw .254）
+    #    或 VPC CIDR（172.28/29/30）重疊。預設 192.168.0.0/16 會蓋掉 192.168.114.x → CP node 連不到
+    #    DNS/registry/Supervisor → 永遠 not Ready → MHC 砍掉重建（remediation loop）。改用 100.96.0.0/11。
     services:
       cidrBlocks: ["10.96.0.0/12"]
     pods:
-      cidrBlocks: ["192.168.0.0/16"]
+      cidrBlocks: ["100.96.0.0/11"]
     serviceDomain: "cluster.local"
   topology:
     classRef:

@@ -115,3 +115,22 @@ Supervisor 控制平面 VM 的管理網路：
 
 > Step 4–7（Management Network / Workload Network / Advanced / Ready）因 nested vCenter
 > renderer 在 Storage 的 SPBM dropdown 卡住未截到；欄位以文字補完於上方各節。
+
+---
+
+# 實機「完成狀態」截圖（乾淨重 cut，2026-06-08）
+
+Supervisor 已 RUNNING、namespace 已建、VKS cluster 已建（DTGW 路線端到端跑通）後，
+直接對 live vCenter 截的乾淨狀態圖（給客戶看）。
+
+| 檔 | 對應 | 重點欄位 |
+|----|------|----------|
+| ![sup-run](30-supervisor-running.jpg) [`30-supervisor-running.jpg`](30-supervisor-running.jpg) | Supervisor → Summary | **Config Status = Running**、Version `v1.32.9+vmware.2-fips-vsc9.1.0.0`、vCenter 9.1.0、**K8s API Server 192.168.114.132**、Capacity（CPU/Mem/Storage）|
+| ![ns-list](32-namespaces-list.jpg) [`32-namespaces-list.jpg`](32-namespaces-list.jpg) | Supervisor → Namespaces | `vks-automation` **Running**（+ 系統 ns svc-cci/svc-tkg/svc-velero）；storage used 反映 VKS cluster |
+| ![ns-det](33-namespace-vks-automation.jpg) [`33-namespace-vks-automation.jpg`](33-namespace-vks-automation.jpg) | Namespace `vks-automation` → Summary | **Config Status Running / Kubernetes Status Active**、Location vcf-m02-supervisor、Capacity used、下方 Kubernetes Service / VM Service / Pods 區 |
+| ![cl-list](34-content-library-list.jpg) [`34-content-library-list.jpg`](34-content-library-list.jpg) | Content Libraries | **兩個 subscribed library**：`tkg-content-library`（Supervisor image，5 templates）、`tkg-tkr-library`（node image，123 items / 7.69 GB）— **少了 tkr-library 建不出 VKS cluster** |
+| ![ns-wiz](35-namespace-create-wizard.jpg) [`35-namespace-create-wizard.jpg`](35-namespace-create-wizard.jpg) | New Namespace wizard | 3 步（Location / Configuration / Review）；Location 選 supervisor `vcf-m02-supervisor` |
+
+> 這批是用自動化直接抓 live vCenter 視窗存到 repo（非手動下載）。
+> VNA 叢集相關截圖在 NSX Manager（需另登入），見上方 VNA 章節的 `20-28`。
+> Content Library 的「Subscribed + URL / 憑證 Security Alert」見 `10-11`（建立時才會跳憑證信任視窗）。
