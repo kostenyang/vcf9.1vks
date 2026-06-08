@@ -20,6 +20,12 @@ spec:
     version: "v1.34.2"
     controlPlane:
       replicas: 1
+      # nested 太慢：guest CP 的 etcd/apiserver bootstrap 可能 >60 分鐘，
+      # 預設 MHC nodeStartupTimeout=3600s 會在 init 完成前把 CP 砍掉 → remediation loop。
+      # 直接 patch MHC 物件被 VKS RBAC 擋；改從 cluster topology 覆寫，拉長到 4 小時。
+      healthCheck:
+        checks:
+          nodeStartupTimeoutSeconds: 14400
     workers:
       machineDeployments:
         - class: node-pool
