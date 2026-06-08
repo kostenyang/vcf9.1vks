@@ -4,11 +4,21 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\lab.ps1"
 
-$supVip = $CP_START_IP          # Supervisor API endpoint（CP VIP，啟用後確認）
-$k8sVer = 'v1.35'              # VKS 3.6 on VCF 9.1
-$vmClass = 'guaranteed-small'
-$storageClass = 'management-storage-policy-single-node'
+# 實測值（2026-06-08）：Supervisor API endpoint 是 wizard 配的 CP VIP，不是 $CP_START_IP。
+# 啟用後 GET /api/vcenter/namespace-management/supervisors/summaries 的 .api_server 確認；本 lab = 192.168.114.132。
+$supVip = $SUP_API_VIP          # 見 lab.ps1；若空則 fallback $CP_START_IP
+if (-not $supVip) { $supVip = $CP_START_IP }
+# k8s 版本 / vmClass 由 vks-cluster.yaml 控制（此處僅註記實測可用組合）。
+# 實測：builtin-generic-v3.6.0 + version v1.34.2 + vmClass best-effort-small（namespace 內有的 class）。
 $kubeconfig = "$HOME\.kube\$VKS_CLUSTER.yaml"
+
+# ⚠️ 前置（實測踩到）：Supervisor 要掛「兩個」content library 才建得起 VKS cluster：
+#   1) Supervisor image library  — https://wp-content.vmware.com/supervisor/v1/latest/lib.json
+#   2) TKG node-image library(v2) — https://wp-content.vmware.com/v2/latest/lib.json
+#      ↑ 少了它 → kubectl apply 被 tkr-resolver webhook 退：
+#        「Could not resolve KR/OSImage … osImageSelector: os-name=photon」
+#      在 vCenter → Workload Management → Supervisor → Configure → Kubernetes Service 指派該 library。
+#      sync 完 kubectl get kubernetesrelease/osimage 會出現 COMPATIBLE=True 的版本，cluster yaml 的 version 要對齊。
 
 if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
     Write-Host "✗ kubectl 未安裝。下載 vsphere plugin：" -ForegroundColor Red

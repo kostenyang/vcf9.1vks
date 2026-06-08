@@ -14,16 +14,16 @@ spec:
     classRef:
       name: builtin-generic-v3.6.0
       namespace: vmware-system-vks-public
-    version: "v1.35"
+    version: "v1.34.2"
     controlPlane:
       replicas: 1
     workers:
       machineDeployments:
         - class: node-pool
           name: node-pool-1
-          replicas: 2
+          replicas: 1
     variables:
       - name: vmClass
-        value: guaranteed-small
+        value: best-effort-small
       - name: storageClass
         value: management-storage-policy-single-node

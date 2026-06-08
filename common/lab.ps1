@@ -12,21 +12,23 @@ $global:NSXPASS = 'VMware1!VMware1!'
 $global:SDDC    = '192.168.114.10'              # SDDC Manager
 $global:CLUSTER_NAME = 'vcf-m02-cl01'
 
-# ── IP 規劃（見根目錄 README §IP）──────────────────────────────────────────
+# ── IP 規劃（見根目錄 README §IP；值為 2026-06-08 實機部署後確認）──────────────
 $global:SUP_NAME        = 'vcf-m02-supervisor'
-$global:CP_START_IP     = '192.168.114.101'     # 5 consecutive: .101-.105
+$global:SUP_API_VIP     = '192.168.114.132'     # Supervisor API endpoint（啟用後分配；kubectl-vsphere login 用這個，非 CP_START_IP）
+$global:CP_START_IP     = '192.168.114.101'     # CP mgmt：5 consecutive .101-.105
 $global:CP_GATEWAY      = '192.168.114.254'
 $global:CP_PREFIX       = 24
 $global:DNS_SERVERS     = @('192.168.114.200')
 $global:NTP_SERVERS     = @('192.168.114.200')
 $global:DNS_SEARCH      = @('rtolab.local')
-$global:SERVICE_CIDR    = '10.96.0.0'
-$global:SERVICE_PREFIX  = 23
+# Supervisor 三段 CIDR（不可互相重疊；實測 wizard 預設 Private(VPC)=Private TGW → 會被擋，故改 172.28）
+$global:SERVICE_CIDR    = '172.29.0.0'          # Supervisor service CIDR
+$global:SERVICE_PREFIX  = 16
 
 $global:EXT_IPBLOCK_CIDR = '192.168.114.128/26' # external (public/LB/SNAT); /26 必須對齊邊界 .0/.64/.128/.192
 $global:PRIV_TGW_CIDR    = '172.30.0.0/16'      # private TGW block (VKS 要 /16)
-$global:VPC_PRIVATE_CIDR = '172.30.0.0'
-$global:VPC_PRIVATE_PREFIX = 24
+$global:VPC_PRIVATE_CIDR = '172.28.0.0'         # VPC Private CIDR（與 Private TGW 172.30 不重疊）
+$global:VPC_PRIVATE_PREFIX = 16
 
 # NSX 資源命名
 $global:PROJECT_ID    = 'default'                       # 用 default project（lab 已有）
