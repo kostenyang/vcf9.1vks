@@ -40,9 +40,17 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 4. VNA Clusters 清單：Status **In Progress**（橘）→ 等 OVA 部署 + 開機 + 註冊（nested 約 15–30 分鐘）→ **Up / Success**。
 5. （要 HA）再 **ADD** 或 **CLONE** 第二台（`.107`）。
 
-> 實機驗證：UI 建出來的物件 = `appliance_form_factor=SMALL`、`service_type=VPC_SERVICES`，
-> 與 [`Step1-Setup-DTGW.ps1`](Step1-Setup-DTGW.ps1) 反推的 schema 一致。
-> Poll 狀態：`GET /policy/api/v1/infra/sites/default/enforcement-points/default/virtual-network-appliance-clusters`
+> Poll 狀態：`GET /policy/api/v1/infra/sites/default/enforcement-points/default/virtual-network-appliance-clusters/<id>/state`
+> （consolidated_status IN_PROGRESS → SUCCESS）。
+
+實機截圖（見 [../screenshots/](../screenshots/)）：
+- [`20-vna-add-cluster.jpg`](../screenshots/20-vna-add-cluster.jpg) Add Cluster
+- [`21-vna-form-factor.jpg`](../screenshots/21-vna-form-factor.jpg) form factor 選項（⚠️ 圖上雖列 Small，**實際要選 Medium**）
+- [`22-vna-add-node.jpg`](../screenshots/22-vna-add-node.jpg) ~ [`25-vna-ip-gw-filled.jpg`](../screenshots/25-vna-ip-gw-filled.jpg) Add Node（compute manager/cluster/datastore/static IP）
+- [`26-vna-node-added.jpg`](../screenshots/26-vna-node-added.jpg) node 加入 → SAVE
+- [`27-vna-in-progress.jpg`](../screenshots/27-vna-in-progress.jpg) 部署 In Progress
+
+> ⚠️ 上述部分截圖是首次（誤選 Small）的流程；form factor 一定要選 **Medium**（Supervisor 最小）。
 
 ---
 
