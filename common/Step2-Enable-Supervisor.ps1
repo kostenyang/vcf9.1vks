@@ -17,7 +17,7 @@ Connect-Vc
 if (-not $VpcProfileId) { $VpcProfileId = $VPC_PROFILE_ID }
 
 # ── 已啟用就跳過 ──────────────────────────────────────────────────────────────
-$sups = Vc-Get '/api/vcenter/namespace-management/supervisors'
+$sups = Vc-Get '/api/vcenter/namespace-management/supervisors/summaries'
 if ($sups | Where-Object { $_.config_status -eq 'RUNNING' }) {
     Write-Host "已有 RUNNING Supervisor，跳過。直接 Step3。" -ForegroundColor Green
     $sups | ForEach-Object { Write-Host "  $($_.supervisor)  $($_.config_status)" }
@@ -103,7 +103,7 @@ catch { Write-Host "✗ $($_.ErrorDetails.Message)" -ForegroundColor Red; exit 1
 $deadline = (Get-Date).AddMinutes(90)
 do {
     Start-Sleep 60
-    $m = (Vc-Get '/api/vcenter/namespace-management/supervisors') | Select-Object -First 1
+    $m = (Vc-Get '/api/vcenter/namespace-management/supervisors/summaries') | Select-Object -First 1
     Write-Host "  [$(Get-Date -Format HH:mm:ss)] $($m.config_status)"
     if ($m.config_status -in 'RUNNING','ERROR') { break }
 } while ((Get-Date) -lt $deadline)
