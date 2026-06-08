@@ -32,45 +32,54 @@ $cm = $cmList.results | Where-Object { $_.server -eq $VC -or $_.display_name -ma
 if (-not $cm) { $cm = $cmList.results | Select-Object -First 1 }
 Write-Host "  compute manager: $($cm.display_name)  id=$($cm.id)"
 
-# 取 overlay transport zone
-$tz = (Nsx-Get '/policy/api/v1/infra/sites/default/enforcement-points/default/transport-zones').results | Where-Object { $_.tz_type -match 'OVERLAY' } | Select-Object -First 1
-Write-Host "  overlay TZ: $($tz.display_name)  path=$($tz.path)"
+# 取部署 moref（PowerCLI）：cluster / datastore / mgmt DVPG
+Import-Module VMware.VimAutomation.Core -ErrorAction SilentlyContinue
+Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope Session | Out-Null
+Connect-VIServer -Server $VC -User $VCUSER -Password $VCPASS -Force | Out-Null
+$clMoref = (Get-Cluster $CLUSTER_NAME).ExtensionData.MoRef.Value                                   # e.g. domain-c9
+$dsMoref = (Get-Datastore | ? Name -match 'vsan' | Select -First 1).ExtensionData.MoRef.Value      # e.g. datastore-15
+$pgMoref = (Get-VDPortgroup | ? { $_.VlanConfiguration.VlanId -eq 114 -and $_.Name -match 'pg-mgmt$' } | Select -First 1).Key  # e.g. dvportgroup-21
+Disconnect-VIServer * -Confirm:$false -Force | Out-Null
+Write-Host "  cluster=$clMoref  datastore=$dsMoref  mgmt_pg=$pgMoref"
 
-# VNA cluster（先建空 cluster，再 PUT node 為 child）
-$vnaCluster = @{
-    resource_type        = 'VirtualNetworkApplianceCluster'
-    display_name         = $VNA_CLUSTER_ID
-    appliance_form_factor= 'SMALL'
-    appliance_type       = 'VirtualNetworkAppliance'
-    service_type         = 'VPC_SERVICES'
-    advanced_configuration = @{ overlay_transport_zone_path = $tz.path }
-}
+# VNA cluster + node — schema 為實機部署後 GET 回來驗證的真實格式（非反推）
+# ⚠️ form factor 必須 ≥ MEDIUM：官方要求啟用 vSphere Supervisor 的 VNA 最小是 Medium（Small 不支援）。
 $vnaBase = "/policy/api/v1/infra/sites/default/enforcement-points/default/virtual-network-appliance-clusters/$VNA_CLUSTER_ID"
+$vnaCluster = @{
+    resource_type         = 'VirtualNetworkApplianceCluster'
+    display_name          = $VNA_CLUSTER_ID
+    appliance_form_factor = 'MEDIUM'          # Supervisor 最小 Medium；Small 不支援
+    appliance_type        = 'VirtualNetworkAppliance'
+    service_type          = 'VPC_SERVICES'
+}
 Nsx-Patch -DryRun:$DryRun -path $vnaBase -body $vnaCluster | Out-Null
 
-# VNA node（cluster child）
-# 注意：cluster_or_resource_pool_id / datastore_id 需用 NSX 認得的 moref；
-#       下面用 placeholder，DryRun 會印出，正式跑前填實際值（見 method-ui.md 取得方式）。
+# VNA node — ip_assignment_specs 真實格式 = management_port_subnets + default_gateway + StaticIpv4
 $vnaNode = @{
     resource_type = 'VirtualNetworkAppliance'
+    id            = 'vcf-m02-vna01'
     display_name  = 'vcf-m02-vna01'
     hostname      = 'vcf-m02-vna01.rtolab.local'
     vm_deployment_config = @{
-        compute_manager_id          = $cm.id
-        cluster_or_resource_pool_id = '<CLUSTER_OR_RP_MOREF>'   # ← 填 vcf-m02-cl01 的 moref
-        datastore_id                = '<DATASTORE_MOREF>'        # ← 填 vSAN datastore moref
+        compute_manager_id          = $cm.id            # f26a252e-...
+        cluster_or_resource_pool_id = $clMoref          # domain-c9
+        datastore_id                = $dsMoref          # datastore-15
+        reservation_info = @{
+            memory_reservation = @{ reservation_percentage = 100 }
+            cpu_reservation    = @{ reservation_in_shares  = 'HIGH_PRIORITY' }
+        }
     }
     management_interface = @{
-        network_id = '<MGMT_PORTGROUP_ID>'                       # ← VLAN114 PG / segment id
+        network_id = $pgMoref                           # dvportgroup-21（DVPG moref，非 NSX segment）
         ip_assignment_specs = @(@{
-            resource_type='StaticIpPoolSpec'   # 或 StaticIpListSpec / DhcpAddressSpec
-            # 視 schema 細節，UI 部一台後 GET 對照最準
+            ip_assignment_type      = 'StaticIpv4'
+            management_port_subnets = @(@{ ip_addresses = @('192.168.114.106'); prefix_length = 24 })
+            default_gateway         = @('192.168.114.254')
         })
     }
-    credentials = @{ cli_password=$NSXPASS; root_password=$NSXPASS; audit_password=$NSXPASS; cli_username='admin'; audit_username='audit' }
 }
 Nsx-Put -DryRun:$DryRun -path "$vnaBase/virtual-network-appliances/vcf-m02-vna01" -body $vnaNode | Out-Null
-Write-Host "  ✓ VNA cluster + node（DryRun 請檢視 placeholder moref 是否需填）" -ForegroundColor Green
+Write-Host "  ✓ VNA cluster (MEDIUM) + node" -ForegroundColor Green
 
 # ── 3. VPC Connectivity Profile（DTGW：不綁 edge）─────────────────────────────
 Write-Host "[3/3] VPC Connectivity Profile '$VPC_PROFILE_ID'（DTGW 模式）..." -ForegroundColor Cyan

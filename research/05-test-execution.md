@@ -62,6 +62,27 @@ httpStatus: BAD_REQUEST  error_code: 520001
 
 詳見 [../common/content-library.md](../common/content-library.md)。
 
+## VNA cluster 部署（DTGW 路線）— 實測 + 一個關鍵坑
+
+- **UI 部署**：NSX Manager `System → Fabric → VNA Clusters → ADD CLUSTER` → node（compute manager/cluster/datastore/mgmt 下拉自動帶 moref）→ SAVE。
+- **🐞 form factor 坑（你提醒抓到的）**：先選了 **Small** → 官方明文
+  「The Medium form factor is the smallest size if you plan on enabling vSphere Supervisor」
+  → **Small 不支援 Supervisor**，砍掉重部 **Medium**。
+- **刪除留 orphaned VM**：in-progress 時刪 VNA cluster，NSX 移除 cluster 物件但**留下半部署的 VM**（PoweredOff），要手動 `Remove-VM` 清掉才能同名重建。
+- **真實 node schema（部署後 GET 回來，補完 API 方法）**：
+  ```
+  vm_deployment_config: { compute_manager_id, cluster_or_resource_pool_id=domain-c9,
+    datastore_id=datastore-15, reservation_info:{memory 100%, cpu HIGH_PRIORITY} }
+  management_interface:
+    network_id = dvportgroup-21          ← DVPG moref（不是 NSX segment）
+    ip_assignment_specs = [{ ip_assignment_type: StaticIpv4,
+      management_port_subnets:[{ip_addresses:[192.168.114.106], prefix_length:24}],
+      default_gateway:[192.168.114.254] }]
+  ```
+  （原本反推用 StaticIpPoolSpec 是錯的；已回寫 `Step1-Setup-DTGW.ps1`。）
+- **API 方法驗證**：用修正後的 `Step1-Setup-DTGW.ps1` 重建 Medium 成功 → API 方法端到端可用。
+- 現狀：`vcf-m02-vna-01`（MEDIUM, VPC_SERVICES）部署中。
+
 ## 尚未執行（重部署，等決定）
 
 | 動作 | 原因 |
