@@ -92,9 +92,13 @@ GET https://192.168.114.13/policy/api/v1/spec/openapi/nsx_policy_api.json
 | 欄位 | 型別 | 備註 |
 |------|------|------|
 | enable | boolean | 啟用 service gateway（DTGW + Edge 都設 true）|
-| edge_cluster_paths | [string] | **Centralized 填 edge cluster；DTGW 留空（NSX 自動放到 VNA）** |
+| edge_cluster_paths | [string] | 欄位 description：「edge cluster **or service cluster** path」。**Centralized 填 edge cluster path；DTGW 填 VNA cluster path**（兩者都放這個欄位，不是留空！）|
 | nat_config | VpcNatConfig | **「default outbound NAT」在這** |
 | qos_config | GatewayQosProfileConfig | |
+
+> ⚠️ **實測修正**：DTGW 的 VNA cluster path 是放在 `edge_cluster_paths`（欄位名雖叫 edge，但接受 service cluster path）。
+> 留空會被 NSX 退：「Please configure either virtual network appliance cluster(s) for distributed TGW or edge cluster(s)…」。
+> VNA path 例：`/infra/sites/default/enforcement-points/default/virtual-network-appliance-clusters/vcf-m02-vna-01`
 
 ### VpcNatConfig（= UI 的 "default outbound NAT"）
 | 欄位 | 型別 | 備註 |
@@ -102,9 +106,24 @@ GET https://192.168.114.13/policy/api/v1/spec/openapi/nsx_policy_api.json
 | enable_default_snat | boolean | 開 VPC pod 對外 SNAT |
 | auto_snat_ip_block | string | SNAT 用的 external IP block path |
 
-> **DTGW + VNA 的 attach**：把 VPC profile 的 `service_gateway` 設 `enable=true` +
-> `nat_config.enable_default_snat=true`（`edge_cluster_paths` 留空）。VNA cluster
-> （service_type=VPC_SERVICES）存在時，NSX 自動把每個 VPC 的 stateful service instance 放上去。
+### DistributedVlanConnection（DTGW 對外 VLAN 連線）+ TransitGatewayAttachment
+DTGW 還需要一個**對外連線**，否則 Supervisor 啟用時 VPC profile 會報
+「Transit Gateway Attachment does not exist for Transit Gateway default」。兩個物件：
+
+```
+# 1) 外部 VLAN 連線（infra level）
+PUT /policy/api/v1/infra/distributed-vlan-connections/<id>
+{ "resource_type":"DistributedVlanConnection", "vlan_id":114,
+  "gateway_addresses":["192.168.114.254/24"],          # VLAN 上游 gateway（CIDR）
+  "associated_ip_block_paths":["/infra/ip-blocks/<ext-block>"] }
+
+# 2) 把 default TGW attach 到該連線
+PUT /policy/api/v1/orgs/default/projects/default/transit-gateways/default/attachments/<id>
+{ "resource_type":"TransitGatewayAttachment",
+  "connection_path":"/infra/distributed-vlan-connections/<id>" }
+```
+
+> 完整 DTGW 對外鏈：VNA cluster → service_gateway(edge_cluster_paths=VNA + nat) → DistributedVlanConnection(VLAN 上游) → TransitGatewayAttachment(default TGW→連線)。
 
 ### DistributedVlanConnection（DTGW external connection）
 | 欄位 | 型別 | 必填 | 備註 |
