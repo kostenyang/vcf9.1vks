@@ -83,6 +83,34 @@ httpStatus: BAD_REQUEST  error_code: 520001
 - **API 方法驗證**：用修正後的 `Step1-Setup-DTGW.ps1` 重建 Medium 成功 → API 方法端到端可用。
 - 現狀：`vcf-m02-vna-01`（MEDIUM, VPC_SERVICES）部署中。
 
+## Supervisor 啟用（DTGW + VNA，UI wizard，實測成功）
+
+完整 DTGW 對外鏈（缺一不可，照順序）：
+1. **VNA cluster**（Medium）部好。
+2. **VPC profile.service_gateway**：`enable=true` + `edge_cluster_paths=[VNA path]` + `nat_config.enable_default_snat=true`。
+3. **DistributedVlanConnection**（VLAN 114 + 上游 gateway `.254/24` + external IP block）。
+4. **TransitGatewayAttachment**（default TGW → DVC）。←  少了這個，wizard 報「Transit Gateway Attachment does not exist」。
+
+### 踩到的坑
+- **vCenter compatibility 有快取**：補上 attachment 後，wizard 的 VPC profile 仍顯示「(incompatible)」，
+  要等 vCenter wcp 服務 re-poll NSX（數分鐘）+ 重開 wizard 才會變相容。NSX 端 `state=REALIZED` 不代表 vCenter 立刻認。
+- **CIDR overlap**：wizard 的 **Private (VPC) CIDRs** 預設會等於 Private TGW block（都 172.30.0.0/16）→ FINISH 被擋
+  「Private CIDR overlaps with Private TGW IP Block」。要手動改成不重疊（本 lab 用 `172.28.0.0/16`）。
+  三段最終：VPC private `172.28.0.0/16`、Service CIDR `172.29.0.0/16`、Private TGW `172.30.0.0/16`。
+- wizard 的錯誤橫幅是**持久通知**（要按 X 關），改好後不會自動消失，別被它誤導。
+
+### Supervisor wizard（VPC mode，7 步，實機驗證）
+1. vCenter + Network → VCF Networking with VPC
+2. Supervisor location → Cluster Deployment，name `vcf-m02-supervisor`，選 vcf-m02-cl01
+3. Storage → 3 個都 `Management Storage Policy - Single Node`
+4. Management Network → Static、PG `vcf-m02-cl01-vds01-pg-mgmt`、IP `192.168.114.101-105`、mask `/24`、gw `.254`、DNS/NTP `.200`、search `rtolab.local`
+5. Workload Network → NSX Project `default` + VPC Profile `vcf-m02-vks-vpc-profile`、Private(VPC) CIDR `172.28.0.0/16`、Service CIDR `172.29.0.0/16`
+6. Advanced → Control Plane Size Small
+7. Review → FINISH → config_status **CONFIGURING → RUNNING**（30-60 分鐘）
+
+> Tip：UI dropdown 用瀏覽器自動化時，Clarity combobox 用 form_input(ref) 設值最穩；
+> Network/VPC-profile 這種要真的從清單點選或 form_input 才會註冊驗證。
+
 ## 尚未執行（重部署，等決定）
 
 | 動作 | 原因 |
