@@ -100,8 +100,18 @@ Supervisor 控制平面 VM 的管理網路：
 
 ---
 
-## 截圖檔
+## 截圖檔（實機）
 
-實機截圖（Step intro / 1 / 2 / 3）已在對話中附給使用者；PNG 檔存在操作端 "RTO LAB" Chrome 的機器，
-要放進 repo 的話把檔案丟進本資料夾即可（建議命名 `00-intro.png` / `01-vcenter-network.png` /
-`02a-cluster-deploy.png` / `02b-cluster-compatible.png` / `03-storage.png`）。
+| 檔 | 對應 |
+|----|------|
+| ![intro](00-intro.jpg) [`00-intro.jpg`](00-intro.jpg) | Supervisor Management 入口（No items found）|
+| ![s1](01-step1-vcenter-network.jpg) [`01-step1-vcenter-network.jpg`](01-step1-vcenter-network.jpg) | Step1 vCenter + networking stack（只有 VPC / VDS）|
+| [`02-step2-cluster-deployment.jpg`](02-step2-cluster-deployment.jpg) | Step2 CLUSTER DEPLOYMENT tab |
+| [`03-step2-incompatible.jpg`](03-step2-incompatible.jpg) | Step2 INCOMPATIBLE（未選 datacenter 前空白）|
+| [`04-step2-datacenter-expanded.jpg`](04-step2-datacenter-expanded.jpg) | Step2 展開 vcf-m02-dc |
+| ![s2](05-step2-cluster-compatible.jpg) [`05-step2-cluster-compatible.jpg`](05-step2-cluster-compatible.jpg) | Step2 COMPATIBLE → vcf-m02-cl01（4 hosts / 137 GHz / 171 GB）|
+| [`06-step2-name-cluster-selected.jpg`](06-step2-name-cluster-selected.jpg) | Step2 填 Supervisor name + 選 cluster |
+| ![s3](07-step3-storage.jpg) [`07-step3-storage.jpg`](07-step3-storage.jpg) | Step3 Storage（3 個 policy）|
+
+> Step 4–7（Management Network / Workload Network / Advanced / Ready）因 nested vCenter
+> renderer 在 Storage 的 SPBM dropdown 卡住未截到；欄位以文字補完於上方各節。
