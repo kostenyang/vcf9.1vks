@@ -74,7 +74,9 @@ NSX Manager (`https://192.168.114.13`) + inner vCenter (`https://kosten-vcf91-vc
 2. **Supervisor location**：tab 選 **CLUSTER DEPLOYMENT**；Supervisor name `vcf-m02-supervisor`；左樹**先點 datacenter `vcf-m02-dc`** 才會在 COMPATIBLE 列出 `vcf-m02-cl01` → 選它
 3. **Storage**：Control Plane / Ephemeral Disks / Image Cache 三個都選 `Management Storage Policy - Single Node`（FTT=0）
 4. **Management Network**：Static，起始 IP `192.168.114.101`、mask `255.255.255.0`、gateway `.254`、DNS/NTP `192.168.114.200`、search domain `rtolab.local`
-5. **Workload Network**：NSX Project `default`、VPC Connectivity Profile **`vcf-m02-vks-vpc-profile`（DTGW 那個）**、Service CIDR `10.96.0.0/23`、Default Private CIDR `172.30.0.0/24`
+5. **Workload Network**：NSX Project `default`、VPC Connectivity Profile **`vcf-m02-vks-vpc-profile`（DTGW 那個）**、Private(VPC) CIDR `172.28.0.0/16`、Service CIDR `172.29.0.0/16`
+   - ⚠️ wizard 預設把 **Private(VPC) CIDR 帶成 = Private TGW block（172.30.0.0/16）** → FINISH 被擋
+     「Private CIDR overlaps with Private TGW IP Block」。手動改成不重疊：本 lab 三段 = VPC private `172.28.0.0/16` / Service `172.29.0.0/16` / Private TGW `172.30.0.0/16`。
 6. **Advanced Settings**：Content Library 指定 TKG subscribed library（`https://wp-content.vmware.com/supervisor/v1/latest/lib.json`）、Control Plane Size **Small**
 7. **Ready to complete**：Review → **FINISH**，等 30–60 分鐘到 **Running**
 
