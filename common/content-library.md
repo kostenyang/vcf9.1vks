@@ -44,7 +44,9 @@ pwsh ./common/Step1b-Create-ContentLibrary.ps1 -Mode Local -Name tkg-content-lib
 4. **Add storage** — 選 vSAN datastore（`vcf-m02-cl01-ds-vsan01`）。
 5. **Ready to complete** — Review → **FINISH**。建完自動 sync。
 
-截圖見 [../screenshots/](../screenshots/)（`10-*`～`15-*`，需從操作端機器複製進 repo）。
+截圖：
+- ![configure](../screenshots/10-cl-configure.jpg) [`10-cl-configure.jpg`](../screenshots/10-cl-configure.jpg) — Step2 Local vs Subscribed
+- ![cert](../screenshots/11-cl-cert-alert.jpg) [`11-cl-cert-alert.jpg`](../screenshots/11-cl-cert-alert.jpg) — Security Alert（wp-content.vmware.com DigiCert 憑證，按 YES 信任 = API 的 ssl_thumbprint）
 
 ---
 
