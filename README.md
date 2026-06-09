@@ -73,8 +73,9 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 | Supervisor mgmt gateway | `192.168.114.254` | ✅ |
 | NSX External IP Block（public/LB/SNAT 來源）| `192.168.114.128/26`（.128–.191）| ✅ |
 | Private TGW IP Block（VKS 要求 /16）| `172.30.0.0/16` | ✅ |
-| Supervisor Service CIDR (K8s ClusterIP) | `10.96.0.0/23` | ✅ |
-| VKS cluster Pod CIDR（per cluster）| `192.168.0.0/16` | ✅ |
+| Supervisor Service CIDR (K8s ClusterIP) | `172.29.0.0/16` | ✅ |
+| VPC Default Private CIDR（namespace 子網來源）| `172.28.0.0/16` | ✅ |
+| VKS cluster Pod CIDR（per cluster）| `100.96.0.0/11` | ✅ 避開管理網段 192.168.114.0/24！|
 | VKS cluster Service CIDR（per cluster）| `10.96.0.0/12` | ✅ |
 | Edge TEP（Path B 才需要）| `192.168.117.x`（overlay VLAN 117）| Path B |
 | Edge uplink（Path B 才需要）| `192.168.114.72–.73`（inventory 規劃）| Path B |
