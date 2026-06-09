@@ -112,12 +112,16 @@ Supervisor 控制平面 VM 的管理網路：
 | ![s2](05-step2-cluster-compatible.jpg) [`05-step2-cluster-compatible.jpg`](05-step2-cluster-compatible.jpg) | Step2 COMPATIBLE → vcf-m02-cl01（4 hosts / 137 GHz / 171 GB）|
 | [`06-step2-name-cluster-selected.jpg`](06-step2-name-cluster-selected.jpg) | Step2 填 Supervisor name + 選 cluster |
 | ![s3](07-step3-storage.jpg) [`07-step3-storage.jpg`](07-step3-storage.jpg) | Step3 Storage（3 個 policy）|
+| ![s4](08-step4-mgmt-network.jpg) [`08-step4-mgmt-network.jpg`](08-step4-mgmt-network.jpg) | Step4 Management Network：IP Mode=Static、domain-c9 Network=vcf-m02-cl01-vds01-pg-mgmt、IP 192.168.114.101–105、GW .254、DNS/NTP .200、Domain rtolab.local |
+| ![s5](09-step5-workload-network.jpg) [`09-step5-workload-network.jpg`](09-step5-workload-network.jpg) | Step5 Workload Network：NSX Project=Default、**VPC Connectivity Profile=vcf-m02-vks-vpc-profile**、Ext IP Block vcf-m02-vks-ext-ipblock 192.168.114.128/26、Priv TGW vcf-m02-vks-priv-tgw 172.30.0.0/16、Service CIDR 172.29.0.0/16、DNS/NTP .200 |
+| ![s6](10-step6-advanced.jpg) [`10-step6-advanced.jpg`](10-step6-advanced.jpg) | Step6 Advanced Settings：Supervisor Control Plane Size=Small（CPUs:4 / Mem:16GB / Storage:48GB）、API Server DNS Name=Optional |
+| ![s7](11-step7-ready.jpg) [`11-step7-ready.jpg`](11-step7-ready.jpg) | Step7 Ready to Complete：全設定摘要（vCenter Server、Supervisor Name=vcf-m02-supervisor、Zone=domain-c9、Storage Policy、Mgmt Network IP .101–.105）；**未按 FINISH，僅截圖** |
 
-> Step 4–7（Management Network / Workload Network / Advanced / Ready）因 nested vCenter
-> renderer 在 Step 3 Storage 的 SPBM policy dropdown 載入時凍結，無法繼續操作 wizard；
-> 欄位值以實機部署後從 Supervisor → Configure 頁面確認，文字補完於上方各節。
-> （已試 JS fetch/XHR interceptor 繞過 SPBM 載入，vSphere client 不走標準 XHR，無效。）
-> 實際部署值見 `common/lab.ps1`：SERVICE_CIDR=172.29.0.0/16、VPC_PRIVATE_CIDR=172.28.0.0/16。
+> Step 4–7 截圖拍攝於 2026-06-09 第二次走 wizard（重新進入 GET STARTED，從 Step 1 走到 Step 7 Review
+> 但未按 FINISH）。Storage policy 此次選了 `vcf-m02-cl01 vSAN Storage Policy`（第一個字母序選項），
+> 實際部署值為 `Management Storage Policy - Single Node`（FTT=0，見 `common/lab.ps1` 及
+> Supervisor Configure 截圖 `44-vc-sup-configure-storage.jpg`）。
+> Service CIDR=172.29.0.0/16、VPC_PRIVATE_CIDR=172.28.0.0/16。
 
 ---
 

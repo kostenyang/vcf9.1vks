@@ -280,7 +280,7 @@ for n in notes2:
 # ─── SLIDE 8b — Wizard Section Header ────────────────────────────────────────
 slide = dark_slide(
     'Activate Supervisor Wizard\n實機 UI Walkthrough',
-    'Step 1–3 截圖；Step 4–7 nested vCenter renderer 凍結，欄位文字補完'
+    'Steps 1–7 全部截圖（2026-06-08 Step1-3；2026-06-09 Step4-7）'
 )
 
 # ─── SLIDE 8c — Wizard 入口 + Step 1 ─────────────────────────────────────────
@@ -341,7 +341,7 @@ s3_notes = [
     '⚠️ SPBM dropdown 在 nested',
     '  vCenter 載入 ~2–10 分鐘',
     '  → renderer 凍結',
-    '  → Step 4+ 未能截圖',
+    '  → Step 4-7 於隔日補截圖',
 ]
 y = Inches(1.3)
 for n in s3_notes:
@@ -349,54 +349,114 @@ for n in s3_notes:
              font_size=12, bold=False, color=WHITE)
     y += Inches(0.37)
 
-# ─── SLIDE 8f — Wizard Steps 4–7 文字補完 ─────────────────────────────────────
-slide = content_slide('Wizard Steps 4–7（實機驗證欄位；renderer 凍結未截圖）')
-add_rect(slide, Inches(0.3), Inches(1.1), Inches(5.9), Inches(5.8), DARK_BG)
-add_rect(slide, Inches(6.5), Inches(1.1), Inches(6.5), Inches(5.8), DARK_BG)
-
-step4_lines = [
-    'Step 4 — Management Network',
-    '  Network: vcf-m02-cl01-vds01-pg-mgmt',
-    '  Mode: Static',
-    '  Starting IP: 192.168.114.101',
-    '  Subnet: 255.255.255.0',
-    '  Gateway: 192.168.114.254',
-    '  DNS/NTP: 192.168.114.200',
-    '  Domain: rtolab.local',
+# ─── SLIDE 8f — Wizard Step 4 Management Network ─────────────────────────────
+slide = content_slide('Wizard Step 4 — Management Network')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '08-step4-mgmt-network.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+s4_notes = [
+    'IP Assignment Mode: Static',
+    'domain-c9 Network:',
+    '  vcf-m02-cl01-vds01-pg-mgmt',
     '',
-    'Step 6 — Advanced Settings',
-    '  Content Library: tkg-content-library',
-    '  Control Plane Size: Small',
+    'IP Addresses:',
+    '  192.168.114.101 – 105',
+    'Subnet Mask: 255.255.255.0',
+    'Gateway: 192.168.114.254',
+    'DNS Server(s): 192.168.114.200',
+    'DNS Search: rtolab.local',
+    'NTP Server(s): 192.168.114.200',
 ]
-step5_lines = [
-    'Step 5 — Workload Network（VPC）',
-    '  NSX Project: default',
-    '  VPC Profile: vcf-m02-vks-vpc-profile',
-    '  Service CIDR: 172.29.0.0/16',
-    '  Default Private CIDR: 172.28.0.0/16',
-    '  DNS/NTP: 192.168.114.200',
+y = Inches(1.3)
+for n in s4_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.38),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.38)
+
+# ─── SLIDE 8g — Wizard Step 5 Workload Network ───────────────────────────────
+slide = content_slide('Wizard Step 5 — Workload Network（VPC mode）')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '09-step5-workload-network.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+s5_notes = [
+    'NSX Project: Default',
+    'VPC Connectivity Profile:',
+    '  vcf-m02-vks-vpc-profile ✅',
     '',
-    'Step 7 — Ready to Complete',
-    '  確認所有設定 → FINISH',
-    '  （部署 30–60 分鐘）',
+    'External IP Blocks:',
+    '  vcf-m02-vks-ext-ipblock',
+    '  192.168.114.128/26',
     '',
-    '⚠️ 本次截圖停在 Step 3，',
-    '  未按 FINISH；已另用 API 部署',
+    'Private TGW IP Blocks:',
+    '  vcf-m02-vks-priv-tgw',
+    '  172.30.0.0/16',
+    '',
+    'Service CIDR: 172.29.0.0/16',
+    'DNS/NTP: 192.168.114.200',
 ]
+y = Inches(1.3)
+for n in s5_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.35),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.35)
 
-y_l = Inches(1.3)
-for line in step4_lines:
-    col = ACCENT if not line.startswith('  ') else WHITE
-    add_text(slide, line, Inches(0.45), y_l, Inches(5.6), Inches(0.35),
-             font_size=11.5, bold=False, color=col)
-    y_l += Inches(0.37)
+# ─── SLIDE 8h — Wizard Step 6 Advanced Settings ──────────────────────────────
+slide = content_slide('Wizard Step 6 — Advanced Settings')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '10-step6-advanced.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+s6_notes = [
+    'Supervisor Control Plane Size:',
+    '  Small',
+    '  (CPUs: 4 / Memory: 16 GB',
+    '   Storage: 48 GB)',
+    '',
+    'API Server DNS Name(s):',
+    '  Optional（lab 留空）',
+    '',
+    'Export configuration:',
+    '  Unchecked',
+    '',
+    '→ 無 Content Library 選項',
+    '  （Wizard 另有 Prerequisites',
+    '  步驟指定 Library）',
+]
+y = Inches(1.3)
+for n in s6_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.36),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.36)
 
-y_r = Inches(1.3)
-for line in step5_lines:
-    col = ACCENT if not line.startswith('  ') else WHITE
-    add_text(slide, line, Inches(6.65), y_r, Inches(6.2), Inches(0.35),
-             font_size=11.5, bold=False, color=col)
-    y_r += Inches(0.37)
+# ─── SLIDE 8i — Wizard Step 7 Ready to Complete ──────────────────────────────
+slide = content_slide('Wizard Step 7 — Ready to Complete')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '11-step7-ready.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+s7_notes = [
+    'vCenter Server:',
+    '  kosten-vcf91-vc.rtolab.local',
+    'Network: VCF Networking with VPC',
+    '',
+    'Supervisor Name:',
+    '  vcf-m02-supervisor',
+    'vSphere Zone: domain-c9',
+    'CP HA: Disabled',
+    '',
+    'Mgmt IP: .101–.105',
+    'GW: .254 / DNS/NTP: .200',
+    '',
+    '⚠️ 未按 FINISH',
+    '  （截圖目的，已另用 API 部署）',
+]
+y = Inches(1.3)
+for n in s7_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.36),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.36)
 
 # ─── SLIDE 9 — Supervisor Configure Network (Management) ──────────────────────
 slide = content_slide('Supervisor Configure — 管理網路（Management Network）')
@@ -693,7 +753,7 @@ links = [
     'research/05-test-execution.md  →  踩坑與修正完整紀錄',
     'python/  →  Step1~4 Python 腳本（requests + kubernetes client）',
     'common/vks-cluster.yaml  →  ClusterClass CR（含 Pod CIDR + MHC 修正）',
-    'screenshots/  →  32 張實機截圖（含 NSX + Supervisor Configure 前置設定）',
+    'screenshots/  →  38 張實機截圖（Wizard Step1-7 + NSX + Supervisor Configure 前置設定）',
 ]
 y = Inches(4.5)
 for link in links:
