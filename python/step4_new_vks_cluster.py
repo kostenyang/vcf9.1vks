@@ -63,18 +63,78 @@ CLUSTER_MANIFEST = {
 
 
 def apply_with_kubectl():
+    import time
     import yaml  # pip install pyyaml
-    with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as f:
-        yaml.safe_dump(CLUSTER_MANIFEST, f, sort_keys=False)
-        path = f.name
-    print(f"kubectl apply -f {path}")
-    subprocess.run(["kubectl", "apply", "-f", path], check=True)
-    print("\n=== 等候 / 檢查 ===")
-    subprocess.run(["kubectl", "get", "cluster", lab.VKS_CLUSTER, "-n", lab.NS_NAME], check=False)
-    print("\n取 kubeconfig（CP Ready 後）：")
-    print(f"  kubectl-vsphere login --server={lab.SUP_API_VIP} -u {lab.VCUSER} "
-          f"--tanzu-kubernetes-cluster-name={lab.VKS_CLUSTER} "
-          f"--tanzu-kubernetes-cluster-namespace={lab.NS_NAME} --insecure-skip-tls-verify")
+
+    # 1. kubectl-vsphere login → 建立 kubeconfig context
+    print("=== 登入 Supervisor ===")
+    subprocess.run([lab.KUBECTL, "vsphere", "login",
+                    f"--server={lab.SUP_API_VIP}",
+                    f"--vsphere-username={lab.VCUSER}",
+                    f"--vsphere-password={lab.VCPASS}",
+                    "--insecure-skip-tls-verify"], check=True)
+    subprocess.run([lab.KUBECTL, "config", "use-context", lab.NS_NAME], check=True)
+
+    # 2. Apply Cluster CR（若已存在跳過）
+    chk = subprocess.run([lab.KUBECTL, "get", "cluster", lab.VKS_CLUSTER,
+                          "-n", lab.NS_NAME, "--ignore-not-found"],
+                         capture_output=True, text=True)
+    if lab.VKS_CLUSTER in chk.stdout:
+        print(f"cluster '{lab.VKS_CLUSTER}' 已存在，跳過建立。")
+    else:
+        with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as f:
+            yaml.safe_dump(CLUSTER_MANIFEST, f, sort_keys=False)
+            path = f.name
+        print(f"kubectl apply -f {path}")
+        subprocess.run([lab.KUBECTL, "apply", "-f", path], check=True)
+
+    # 3. 輪詢 Provisioned（最多 90 分鐘）
+    print("\n=== 等候 cluster Ready（最多 90 分鐘）===")
+    deadline = time.time() + 90 * 60
+    phase, cp_ready = "", ""
+    while time.time() < deadline:
+        time.sleep(60)
+        r_phase = subprocess.run(
+            [lab.KUBECTL, "get", "cluster", lab.VKS_CLUSTER, "-n", lab.NS_NAME,
+             "-o", "jsonpath={.status.phase}"],
+            capture_output=True, text=True)
+        r_cp = subprocess.run(
+            [lab.KUBECTL, "get", "cluster", lab.VKS_CLUSTER, "-n", lab.NS_NAME,
+             "-o", "jsonpath={.status.controlPlaneReady}"],
+            capture_output=True, text=True)
+        phase, cp_ready = r_phase.stdout, r_cp.stdout
+        ts = time.strftime("%H:%M:%S")
+        print(f"  [{ts}] phase={phase} cpReady={cp_ready}")
+        if phase == "Provisioned" and cp_ready == "true":
+            break
+        if phase == "Failed":
+            subprocess.run([lab.KUBECTL, "get", "cluster", lab.VKS_CLUSTER,
+                            "-n", lab.NS_NAME, "-o", "yaml"])
+            break
+
+    # 4. 取 kubeconfig
+    if phase == "Provisioned":
+        print("\n=== 下載 kubeconfig ===")
+        subprocess.run([lab.KUBECTL, "vsphere", "login",
+                        f"--server={lab.SUP_API_VIP}",
+                        f"--vsphere-username={lab.VCUSER}",
+                        f"--vsphere-password={lab.VCPASS}",
+                        f"--tanzu-kubernetes-cluster-name={lab.VKS_CLUSTER}",
+                        f"--tanzu-kubernetes-cluster-namespace={lab.NS_NAME}",
+                        "--insecure-skip-tls-verify"], check=True)
+        import os
+        kc = os.path.expanduser(f"~\\.kube\\{lab.VKS_CLUSTER}.yaml")
+        os.makedirs(os.path.dirname(kc), exist_ok=True)
+        flat = subprocess.run([lab.KUBECTL, "config", "view", "--flatten",
+                               f"--context={lab.VKS_CLUSTER}"],
+                              capture_output=True, text=True)
+        with open(kc, "w") as fh:
+            fh.write(flat.stdout)
+        print(f"✓ kubeconfig: {kc}")
+        os.environ["KUBECONFIG"] = kc
+        subprocess.run([lab.KUBECTL, "get", "nodes"])
+    else:
+        print(f"⚠ phase={phase}，未取 kubeconfig。")
 
 
 def apply_with_client():
