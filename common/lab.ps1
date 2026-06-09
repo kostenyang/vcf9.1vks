@@ -43,14 +43,22 @@ $global:T0_NAME       = 'vcf-m02-t0'
 $global:NS_NAME       = 'vks-automation'
 $global:VKS_CLUSTER   = 'vks-auto-01'
 
+# kubectl（非 PATH，固定路徑）
+$global:KUBECTL = 'C:\Users\Administrator\vks-tools\bin\kubectl.exe'
+$env:PATH = "C:\Users\Administrator\vks-tools\bin;$env:PATH"
+
 # ── vCenter session helper ───────────────────────────────────────────────────
 function Connect-Vc {
     $enc = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${VCUSER}:${VCPASS}"))
     $sid = Invoke-RestMethod -SkipCertificateCheck -Method Post -Uri "https://$VC/api/session" -Headers @{Authorization="Basic $enc"}
     $global:VCHDR = @{'vmware-api-session-id' = $sid}
 }
-function Vc-Get  { param($path) Invoke-RestMethod -SkipCertificateCheck -Uri "https://$VC$path" -Headers $VCHDR }
-function Vc-Post { param($path,$body) Invoke-RestMethod -SkipCertificateCheck -Method Post -Uri "https://$VC$path" -Headers $VCHDR -Body ($body|ConvertTo-Json -Depth 20) -ContentType 'application/json' }
+function Vc-Get    { param($path) Invoke-RestMethod -SkipCertificateCheck -Uri "https://$VC$path" -Headers $VCHDR }
+function Vc-Post   { param($path,$body) Invoke-RestMethod -SkipCertificateCheck -Method Post -Uri "https://$VC$path" -Headers $VCHDR -Body ($body|ConvertTo-Json -Depth 20) -ContentType 'application/json' }
+function Vc-Delete { param($path)
+    try { Invoke-RestMethod -SkipCertificateCheck -Method Delete -Uri "https://$VC$path" -Headers $VCHDR | Out-Null; return $true }
+    catch { if ($_.Exception.Response.StatusCode.value__ -eq 404) { return $false } throw }
+}
 
 # ── NSX Policy helper ─────────────────────────────────────────────────────────
 function Nsx-Hdr { @{ Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${NSXUSER}:${NSXPASS}")); 'Content-Type'='application/json' } }
@@ -62,6 +70,11 @@ function Nsx-Patch { param($path,$body,[switch]$DryRun)
 function Nsx-Put { param($path,$body,[switch]$DryRun)
     if ($DryRun) { Write-Host "  [DryRun] PUT $path" -ForegroundColor DarkGray; ($body|ConvertTo-Json -Depth 20)|Write-Host; return }
     Invoke-RestMethod -SkipCertificateCheck -Method Put -Uri "https://$NSXVIP$path" -Headers (Nsx-Hdr) -Body ($body|ConvertTo-Json -Depth 20)
+}
+function Nsx-Delete { param($path,[switch]$DryRun)
+    if ($DryRun) { Write-Host "  [DryRun] DELETE $path" -ForegroundColor DarkGray; return }
+    try { Invoke-RestMethod -SkipCertificateCheck -Method Delete -Uri "https://$NSXVIP$path" -Headers (Nsx-Hdr) | Out-Null; return $true }
+    catch { if ($_.Exception.Response.StatusCode.value__ -eq 404) { Write-Host "  (already gone: $path)" -ForegroundColor DarkGray; return $false } throw }
 }
 
 # ── SDDC Manager token ────────────────────────────────────────────────────────

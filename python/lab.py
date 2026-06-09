@@ -57,6 +57,9 @@ VNA_CLUSTER_ID = "vcf-m02-vna-01"
 NS_NAME       = "vks-automation"
 VKS_CLUSTER   = "vks-auto-01"
 
+# kubectl 路徑（非 PATH，固定）
+KUBECTL = r"C:\Users\Administrator\vks-tools\bin\kubectl.exe"
+
 
 # ── vCenter REST helper ───────────────────────────────────────────────────────
 class Vc:
@@ -81,6 +84,14 @@ class Vc:
         if not r.ok:
             raise RuntimeError(f"POST {path} -> {r.status_code}: {r.text}")
         return r.json() if r.text else None
+
+    def delete(self, path):
+        r = requests.delete(f"{self.base}{path}", headers=self.hdr, verify=False)
+        if r.status_code == 404:
+            return False
+        if not r.ok:
+            raise RuntimeError(f"DELETE {path} -> {r.status_code}: {r.text}")
+        return True
 
 
 # ── NSX Policy helper ─────────────────────────────────────────────────────────
@@ -115,6 +126,18 @@ class Nsx:
         if not r.ok:
             raise RuntimeError(f"PUT {path} -> {r.status_code}: {r.text}")
         return r.json() if r.text else None
+
+    def delete(self, path, dry_run=False):
+        if dry_run:
+            print(f"  [DryRun] DELETE {path}")
+            return True
+        r = requests.delete(f"{self.base}{path}", headers=self.hdr, verify=False)
+        if r.status_code == 404:
+            print(f"  (already gone: {path})")
+            return False
+        if not r.ok:
+            raise RuntimeError(f"DELETE {path} -> {r.status_code}: {r.text}")
+        return True
 
 
 def sddc_token():
