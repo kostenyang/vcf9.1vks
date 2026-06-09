@@ -79,8 +79,8 @@ Supervisor 控制平面 VM 的管理網路：
 - **NSX Project**：`default`
 - **VPC Connectivity Profile**：選 `vcf-m02-vks-vpc-profile`
   （本 repo Step1 已實際建好這個 profile；DTGW 路線它不綁 edge，Edge 路線它的 service_gateway 綁 edge cluster — UI 下拉看到的是同一個名字，差別在 profile 內容）
-- Service CIDR (K8s ClusterIP)：`10.96.0.0/23`
-- Default Private CIDR（namespace 子網來源）：`172.30.0.0/24`
+- Service CIDR (K8s ClusterIP)：`172.29.0.0/16`
+- Default Private CIDR（namespace 子網來源）：`172.28.0.0/16`
 - DNS / NTP：`192.168.114.200`
 
 ---
@@ -114,7 +114,10 @@ Supervisor 控制平面 VM 的管理網路：
 | ![s3](07-step3-storage.jpg) [`07-step3-storage.jpg`](07-step3-storage.jpg) | Step3 Storage（3 個 policy）|
 
 > Step 4–7（Management Network / Workload Network / Advanced / Ready）因 nested vCenter
-> renderer 在 Storage 的 SPBM dropdown 卡住未截到；欄位以文字補完於上方各節。
+> renderer 在 Step 3 Storage 的 SPBM policy dropdown 載入時凍結，無法繼續操作 wizard；
+> 欄位值以實機部署後從 Supervisor → Configure 頁面確認，文字補完於上方各節。
+> （已試 JS fetch/XHR interceptor 繞過 SPBM 載入，vSphere client 不走標準 XHR，無效。）
+> 實際部署值見 `common/lab.ps1`：SERVICE_CIDR=172.29.0.0/16、VPC_PRIVATE_CIDR=172.28.0.0/16。
 
 ---
 

@@ -198,7 +198,8 @@ rows = [
     ['Supervisor mgmt gateway', '192.168.114.254', '兩路線通用'],
     ['NSX External IP Block (LB/SNAT)', '192.168.114.128/26', '/26 邊界對齊！'],
     ['Private TGW IP Block', '172.30.0.0/16', '/16 硬規定；避開 VCFA 172.27/16'],
-    ['Supervisor Service CIDR', '10.96.0.0/23', 'K8s ClusterIP'],
+    ['Supervisor Service CIDR', '172.29.0.0/16', 'K8s ClusterIP（Supervisor 用）'],
+    ['VPC Default Private CIDR', '172.28.0.0/16', 'namespace 子網來源（不可與 TGW block 重疊）'],
     ['VKS cluster Pod CIDR', '100.96.0.0/11', '避開 192.168.114.0/24 管理網段！'],
     ['VKS cluster Service CIDR', '10.96.0.0/12', 'per-cluster'],
     ['K8s API Server (Supervisor)', '192.168.114.132', '從 External Block 分配'],
@@ -275,6 +276,127 @@ for n in notes2:
     add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.32),
              font_size=12, bold=False, color=WHITE)
     y += Inches(0.37)
+
+# ─── SLIDE 8b — Wizard Section Header ────────────────────────────────────────
+slide = dark_slide(
+    'Activate Supervisor Wizard\n實機 UI Walkthrough',
+    'Step 1–3 截圖；Step 4–7 nested vCenter renderer 凍結，欄位文字補完'
+)
+
+# ─── SLIDE 8c — Wizard 入口 + Step 1 ─────────────────────────────────────────
+slide = content_slide('Wizard 入口 & Step 1 — vCenter + 網路模式')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '00-intro.jpg'),
+               Inches(0.3), Inches(1.1), Inches(6.2), Inches(5.6))
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '01-step1-vcenter-network.jpg'),
+               Inches(6.7), Inches(1.1), Inches(6.3), Inches(5.6))
+add_text(slide, '⚠️ networking stack 只有「VCF Networking with VPC」和「VDS」兩個，9.1 沒有獨立 NSX-classic 選項',
+         Inches(0.3), Inches(6.8), Inches(12.7), Inches(0.5),
+         font_size=12, bold=False, color=DARK_TEXT)
+
+# ─── SLIDE 8d — Wizard Step 2 ─────────────────────────────────────────────────
+slide = content_slide('Wizard Step 2 — Supervisor 位置（Cluster Deployment）')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '06-step2-name-cluster-selected.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+s2_notes = [
+    'CLUSTER DEPLOYMENT tab',
+    '',
+    'Supervisor name:',
+    '  vcf-m02-supervisor',
+    'Cluster: vcf-m02-cl01',
+    '  COMPATIBLE ✅',
+    '  4 hosts',
+    '  CPU: 137.04 GHz',
+    '  Memory: 171.51 GB',
+    '',
+    '⚠️ 先點 datacenter 節點',
+    '  vcf-m02-dc，COMPATIBLE',
+    '  tab 才會列出 cluster',
+]
+y = Inches(1.3)
+for n in s2_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.33),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.37)
+
+# ─── SLIDE 8e — Wizard Step 3 ─────────────────────────────────────────────────
+slide = content_slide('Wizard Step 3 — Storage Policy')
+add_image_safe(slide,
+               os.path.join(SCREENSHOTS, '07-step3-storage.jpg'),
+               Inches(0.3), Inches(1.1), Inches(8.5), Inches(5.8))
+add_rect(slide, Inches(9.1), Inches(1.1), Inches(4.0), Inches(5.8), DARK_BG)
+s3_notes = [
+    '三個 policy 全選：',
+    '  Management Storage',
+    '  Policy - Single Node',
+    '  (FTT=0，lab 用)',
+    '',
+    '• Control Plane Storage Policy',
+    '• Ephemeral Disks Storage Policy',
+    '• Image Cache Storage Policy',
+    '',
+    '⚠️ SPBM dropdown 在 nested',
+    '  vCenter 載入 ~2–10 分鐘',
+    '  → renderer 凍結',
+    '  → Step 4+ 未能截圖',
+]
+y = Inches(1.3)
+for n in s3_notes:
+    add_text(slide, n, Inches(9.2), y, Inches(3.7), Inches(0.35),
+             font_size=12, bold=False, color=WHITE)
+    y += Inches(0.37)
+
+# ─── SLIDE 8f — Wizard Steps 4–7 文字補完 ─────────────────────────────────────
+slide = content_slide('Wizard Steps 4–7（實機驗證欄位；renderer 凍結未截圖）')
+add_rect(slide, Inches(0.3), Inches(1.1), Inches(5.9), Inches(5.8), DARK_BG)
+add_rect(slide, Inches(6.5), Inches(1.1), Inches(6.5), Inches(5.8), DARK_BG)
+
+step4_lines = [
+    'Step 4 — Management Network',
+    '  Network: vcf-m02-cl01-vds01-pg-mgmt',
+    '  Mode: Static',
+    '  Starting IP: 192.168.114.101',
+    '  Subnet: 255.255.255.0',
+    '  Gateway: 192.168.114.254',
+    '  DNS/NTP: 192.168.114.200',
+    '  Domain: rtolab.local',
+    '',
+    'Step 6 — Advanced Settings',
+    '  Content Library: tkg-content-library',
+    '  Control Plane Size: Small',
+]
+step5_lines = [
+    'Step 5 — Workload Network（VPC）',
+    '  NSX Project: default',
+    '  VPC Profile: vcf-m02-vks-vpc-profile',
+    '  Service CIDR: 172.29.0.0/16',
+    '  Default Private CIDR: 172.28.0.0/16',
+    '  DNS/NTP: 192.168.114.200',
+    '',
+    'Step 7 — Ready to Complete',
+    '  確認所有設定 → FINISH',
+    '  （部署 30–60 分鐘）',
+    '',
+    '⚠️ 本次截圖停在 Step 3，',
+    '  未按 FINISH；已另用 API 部署',
+]
+
+y_l = Inches(1.3)
+for line in step4_lines:
+    col = ACCENT if not line.startswith('  ') else WHITE
+    add_text(slide, line, Inches(0.45), y_l, Inches(5.6), Inches(0.35),
+             font_size=11.5, bold=False, color=col)
+    y_l += Inches(0.37)
+
+y_r = Inches(1.3)
+for line in step5_lines:
+    col = ACCENT if not line.startswith('  ') else WHITE
+    add_text(slide, line, Inches(6.65), y_r, Inches(6.2), Inches(0.35),
+             font_size=11.5, bold=False, color=col)
+    y_r += Inches(0.37)
 
 # ─── SLIDE 9 — Supervisor Configure Network (Management) ──────────────────────
 slide = content_slide('Supervisor Configure — 管理網路（Management Network）')
