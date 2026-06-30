@@ -9,7 +9,9 @@
        建議先 -DryRun 檢視，或先 UI 啟一次再 GET 對照。 #>
 param(
     [switch]$DryRun,
-    [string]$VpcProfileId = $null
+    [string]$VpcProfileId = $null,
+    [int]$ControlPlaneCount = 3,
+    [string]$ControlPlaneSize = 'SMALL'
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\lab.ps1"
@@ -52,8 +54,8 @@ Write-Host "  → 模式：$svc"
 $spec = @{
     name = $SUP_NAME
     control_plane = @{
-        count = 3
-        size  = 'SMALL'
+        count = $ControlPlaneCount
+        size  = $ControlPlaneSize
         storage_policy = $polId
         network = @{
             ip_management = @{
