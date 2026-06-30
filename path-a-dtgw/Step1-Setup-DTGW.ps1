@@ -2,7 +2,9 @@
     1. External IP Block（EXTERNAL）+ Private TGW IP Block（PRIVATE，/16）
     2. VNA cluster + 1 個 VNA 節點（VPC_SERVICES）
     3. 在 default project 的 VPC Connectivity Profile 綁 external block + private TGW block
-       （DTGW 模式：service_gateway 不填 edge_cluster_paths）
+       + service_gateway(VNA 放 edge_cluster_paths + default SNAT)
+    4. DTGW 對外連線：DistributedVlanConnection + 把 default TGW attach 上去
+       （3+4 缺任一,Supervisor 會卡 CONFIGURING 報 Gateway Connection / Service Cluster not set）
 
     -DryRun  只印 payload 不送
 
@@ -90,10 +92,30 @@ $profBody = @{
     transit_gateway_path = $tgwPath
     external_ip_blocks   = @("/infra/ip-blocks/$EXT_IPBLOCK_ID")
     private_tgw_ip_blocks= @("/infra/ip-blocks/$PRIV_TGW_ID")
-    # DTGW: service_gateway 不填 edge_cluster_paths（stateful 走 VNA + distributed VLAN connection）
+    # ⚠️ DTGW 一樣要填 service_gateway！VNA cluster path 放 edge_cluster_paths（欄位名叫 edge 但接受 service cluster），
+    #    否則 Supervisor 卡 CONFIGURING:「VPC profile doesn't have a Service Cluster set」（2026-06-30 踩過）。
+    service_gateway = @{
+        enable             = $true
+        edge_cluster_paths = @("$vnaBase")     # VNA cluster path（service cluster）
+        nat_config         = @{ enable_default_snat = $true; auto_snat_ip_block = "/infra/ip-blocks/$EXT_IPBLOCK_ID" }
+    }
 }
 Nsx-Patch -DryRun:$DryRun -path "/policy/api/v1/orgs/default/projects/$PROJECT_ID/vpc-connectivity-profiles/$VPC_PROFILE_ID" -body $profBody | Out-Null
-Write-Host "  ✓ VPC profile（DTGW）" -ForegroundColor Green
+Write-Host "  ✓ VPC profile（DTGW + service_gateway=VNA）" -ForegroundColor Green
+
+# ── 4. DTGW 對外連線：DistributedVlanConnection + TransitGatewayAttachment ─────
+#    沒這個 Supervisor 卡 CONFIGURING:「VPC profile doesn't have a Gateway Connection set /
+#    Transit Gateway Attachment does not exist」（2026-06-30 踩過,Step1 原本漏了這步）。
+Write-Host "[4/4] DTGW external connection (DistributedVlanConnection + TGW attachment)..." -ForegroundColor Cyan
+Nsx-Put -DryRun:$DryRun -path "/policy/api/v1/infra/distributed-vlan-connections/$VPC_PROFILE_ID-dvc" -body @{
+    resource_type='DistributedVlanConnection'; vlan_id=114
+    gateway_addresses=@('192.168.114.254/24'); associated_ip_block_paths=@("/infra/ip-blocks/$EXT_IPBLOCK_ID")
+} | Out-Null
+Nsx-Put -DryRun:$DryRun -path "/policy/api/v1/orgs/default/projects/$PROJECT_ID/transit-gateways/default/attachments/$VPC_PROFILE_ID-tgwa" -body @{
+    resource_type='TransitGatewayAttachment'; connection_path="/infra/distributed-vlan-connections/$VPC_PROFILE_ID-dvc"
+} | Out-Null
+Write-Host "  ✓ DVC + TGW attachment" -ForegroundColor Green
+Write-Host "  ⚠️ Supervisor 啟用後若仍報 'not set',在 vCenter bash 跑 ``vmon-cli --restart wcp`` 清 WCP 快取再等。" -ForegroundColor Yellow
 
 Write-Host @"
 
