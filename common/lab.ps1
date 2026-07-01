@@ -36,6 +36,8 @@ $global:EXT_IPBLOCK_ID = 'vcf-m02-vks-ext-ipblock'
 $global:PRIV_TGW_ID    = 'vcf-m02-vks-priv-tgw'
 $global:VPC_PROFILE_ID = 'vcf-m02-vks-vpc-profile'
 $global:VNA_CLUSTER_ID = 'vcf-m02-vna-01'
+$global:DVC_ID         = 'vcf-m02-dvc'          # DistributedVlanConnection (DTGW uplink)
+$global:TGW_ATTACH_ID  = 'vcf-m02-dvc-attach'  # TransitGatewayAttachment (references DVC)
 $global:EDGE_CLUSTER_NAME = 'vcf-m02-edge-cl01'
 $global:T0_NAME       = 'vcf-m02-t0'
 

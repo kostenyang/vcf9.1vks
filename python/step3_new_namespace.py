@@ -40,10 +40,10 @@ def main():
 
     body = {
         "namespace": lab.NS_NAME,
-        "supervisor": sup_id,
+        "cluster": "domain-c9",   # cluster moref (not supervisor UUID)
         "storage_specs": [{"policy": pol["policy"], "limit": 204800}],
         "access_list": [{
-            "subject_name": "administrator", "subject_type": "USER",
+            "subject": "administrator", "subject_type": "USER",
             "domain": "vsphere.local", "role": "EDIT",
         }],
     }

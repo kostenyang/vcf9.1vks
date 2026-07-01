@@ -19,32 +19,45 @@ function Warn { param($msg)    Write-Host "  ⚠ $msg"   -ForegroundColor Yellow
 Connect-Vc
 
 # ── 1. 刪 VKS cluster（kubectl）─────────────────────────────────────────────
-Step "1/7" "Delete VKS cluster '$VKS_CLUSTER' in namespace '$NS_NAME'"
+Step "1/9" "Delete VKS cluster '$VKS_CLUSTER' in namespace '$NS_NAME'"
 if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
     Warn "kubectl 未安裝，跳過 VKS cluster 刪除（或手動刪）"
 } else {
     if ($DryRun) {
         Write-Host "  [DryRun] kubectl vsphere login / kubectl delete cluster $VKS_CLUSTER -n $NS_NAME" -ForegroundColor DarkGray
     } else {
-        kubectl vsphere login --server=$SUP_API_VIP --vsphere-username=$VCUSER --vsphere-password=$VCPASS --insecure-skip-tls-verify 2>&1 | Out-Null
-        kubectl config use-context $NS_NAME 2>&1 | Out-Null
-        $exists = kubectl get cluster $VKS_CLUSTER -n $NS_NAME --ignore-not-found 2>&1
-        if ($exists -match $VKS_CLUSTER) {
-            kubectl delete cluster $VKS_CLUSTER -n $NS_NAME 2>&1 | Write-Host
-            Write-Host "  等候 cluster 刪除（最多 15 分鐘）..."
-            $dl = (Get-Date).AddMinutes(15)
-            do {
-                Start-Sleep 30
-                $chk = kubectl get cluster $VKS_CLUSTER -n $NS_NAME --ignore-not-found 2>&1
-                Write-Host "  [$(Get-Date -Format HH:mm:ss)] $chk"
-            } while ($chk -match $VKS_CLUSTER -and (Get-Date) -lt $dl)
-            Ok "cluster gone"
-        } else { Skip "cluster '$VKS_CLUSTER' not found" }
+        # kubectl vsphere login with 30s timeout (Supervisor API may be unreachable from this host)
+        $loginJob = Start-Job -ScriptBlock {
+            param($kubectl, $sup_api, $vcuser, $vcpass)
+            & $kubectl vsphere login --server=$sup_api `
+                --vsphere-username=$vcuser --vsphere-password=$vcpass `
+                --insecure-skip-tls-verify 2>&1
+        } -ArgumentList $KUBECTL, $SUP_API_VIP, $VCUSER, $VCPASS
+        $null = Wait-Job $loginJob -Timeout 30
+        if ($loginJob.State -ne 'Completed') {
+            Stop-Job $loginJob; Remove-Job $loginJob -Force
+            Warn "Supervisor API $SUP_API_VIP`:6443 unreachable (30s timeout) — skipping kubectl cluster deletion"
+        } else {
+            Receive-Job $loginJob -ErrorAction SilentlyContinue | Out-Null; Remove-Job $loginJob
+            & $KUBECTL config use-context $NS_NAME 2>&1 | Out-Null
+            $exists = & $KUBECTL get cluster $VKS_CLUSTER -n $NS_NAME --ignore-not-found 2>&1
+            if ($exists -match $VKS_CLUSTER) {
+                & $KUBECTL delete cluster $VKS_CLUSTER -n $NS_NAME 2>&1 | Write-Host
+                Write-Host "  等候 cluster 刪除（最多 15 分鐘）..."
+                $dl = (Get-Date).AddMinutes(15)
+                do {
+                    Start-Sleep 30
+                    $chk = & $KUBECTL get cluster $VKS_CLUSTER -n $NS_NAME --ignore-not-found 2>&1
+                    Write-Host "  [$(Get-Date -Format HH:mm:ss)] $chk"
+                } while ($chk -match $VKS_CLUSTER -and (Get-Date) -lt $dl)
+                Ok "cluster gone"
+            } else { Skip "cluster '$VKS_CLUSTER' not found" }
+        }
     }
 }
 
 # ── 2. 刪 namespace ───────────────────────────────────────────────────────────
-Step "2/7" "Delete namespace '$NS_NAME'"
+Step "2/9" "Delete namespace '$NS_NAME'"
 if ($DryRun) {
     Write-Host "  [DryRun] DELETE /api/vcenter/namespaces/instances/$NS_NAME" -ForegroundColor DarkGray
 } else {
@@ -62,7 +75,7 @@ if ($DryRun) {
 }
 
 # ── 3. Disable Supervisor ─────────────────────────────────────────────────────
-Step "3/7" "Disable Supervisor '$SUP_NAME'"
+Step "3/9" "Disable Supervisor '$SUP_NAME'"
 if ($DryRun) {
     Write-Host "  [DryRun] GET summaries → DELETE /api/vcenter/namespace-management/supervisors/{id}" -ForegroundColor DarkGray
 } else {
@@ -92,7 +105,7 @@ if ($DryRun) {
 }
 
 # ── 4. 刪 VNA node ────────────────────────────────────────────────────────────
-Step "4/7" "Delete VNA node 'vcf-m02-vna01'"
+Step "4/9" "Delete VNA node 'vcf-m02-vna01'"
 Nsx-Delete -DryRun:$DryRun "$vnaBase/virtual-network-appliances/vcf-m02-vna01" | Out-Null
 if (-not $DryRun) {
     Write-Host "  等候 VNA node 刪除（最多 10 分鐘）..."
@@ -105,8 +118,13 @@ if (-not $DryRun) {
     Ok "VNA node gone"
 }
 
-# ── 5. 刪 VNA cluster ─────────────────────────────────────────────────────────
-Step "5/7" "Delete VNA cluster '$VNA_CLUSTER_ID'"
+# ── 5. 刪 VPC Connectivity Profile（必須先於 VNA cluster）───────────────────
+Step "5/9" "Delete VPC Connectivity Profile '$VPC_PROFILE_ID'"
+Nsx-Delete -DryRun:$DryRun "/policy/api/v1/orgs/default/projects/$PROJECT_ID/vpc-connectivity-profiles/$VPC_PROFILE_ID" | Out-Null
+if (-not $DryRun) { Ok "VPC profile deleted" }
+
+# ── 6. 刪 VNA cluster（VPC profile 已刪才可刪）───────────────────────────────
+Step "6/9" "Delete VNA cluster '$VNA_CLUSTER_ID'"
 Nsx-Delete -DryRun:$DryRun $vnaBase | Out-Null
 if (-not $DryRun) {
     Start-Sleep 10
@@ -114,13 +132,18 @@ if (-not $DryRun) {
     catch { Ok "VNA cluster gone" }
 }
 
-# ── 6. 刪 VPC Connectivity Profile ───────────────────────────────────────────
-Step "6/7" "Delete VPC Connectivity Profile '$VPC_PROFILE_ID'"
-Nsx-Delete -DryRun:$DryRun "/policy/api/v1/orgs/default/projects/$PROJECT_ID/vpc-connectivity-profiles/$VPC_PROFILE_ID" | Out-Null
-if (-not $DryRun) { Ok "VPC profile deleted" }
+# ── 7. 刪 TransitGatewayAttachment（必須先於 DVC）────────────────────────────
+Step "7/9" "Delete TransitGatewayAttachment '$TGW_ATTACH_ID'"
+Nsx-Delete -DryRun:$DryRun "/policy/api/v1/orgs/default/projects/$PROJECT_ID/transit-gateways/default/attachments/$TGW_ATTACH_ID" | Out-Null
+if (-not $DryRun) { Ok "TGW attachment deleted" }
 
-# ── 7. 刪 IP blocks ───────────────────────────────────────────────────────────
-Step "7/7" "Delete IP blocks ($EXT_IPBLOCK_ID, $PRIV_TGW_ID)"
+# ── 8. 刪 DistributedVlanConnection（必須先於 IP blocks）─────────────────────
+Step "8/9" "Delete DistributedVlanConnection '$DVC_ID'"
+Nsx-Delete -DryRun:$DryRun "/policy/api/v1/infra/distributed-vlan-connections/$DVC_ID" | Out-Null
+if (-not $DryRun) { Ok "DVC deleted" }
+
+# ── 9. 刪 IP blocks ───────────────────────────────────────────────────────────
+Step "9/9" "Delete IP blocks ($EXT_IPBLOCK_ID, $PRIV_TGW_ID)"
 Nsx-Delete -DryRun:$DryRun "/policy/api/v1/infra/ip-blocks/$EXT_IPBLOCK_ID" | Out-Null
 Nsx-Delete -DryRun:$DryRun "/policy/api/v1/infra/ip-blocks/$PRIV_TGW_ID"    | Out-Null
 if (-not $DryRun) { Ok "IP blocks deleted" }
@@ -128,7 +151,7 @@ if (-not $DryRun) { Ok "IP blocks deleted" }
 Write-Host @"
 
 === Teardown 完成 ===
-  拆除順序：cluster → namespace → Supervisor → VNA node → VNA cluster → VPC profile → IP blocks
+  拆除順序：cluster → namespace → Supervisor → VNA node → VPC profile → VNA cluster → TGW attachment → DVC → IP blocks
   下一步（重新建立）：
     Python 方式：
       cd python
