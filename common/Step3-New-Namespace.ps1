@@ -16,11 +16,14 @@ $pols = Vc-Get '/rest/vcenter/storage/policies'
 $pol  = ($pols.value | Where-Object { $_.name -match 'Single Node' } | Select-Object -First 1)
 if (-not $pol) { $pol = $pols.value | Select-Object -First 1 }
 
+# v1 namespaces instances create_spec 用 'cluster'(ClusterComputeResource moref),非 'supervisor'
+$clusterMoref = (Vc-Get '/api/vcenter/cluster').value | Where-Object { $_.name -eq 'vcf-m02-cl01' } | Select-Object -First 1 -ExpandProperty cluster
+if (-not $clusterMoref) { $clusterMoref = 'domain-c9' }
 $body = @{
     namespace  = $NS_NAME
-    supervisor = $supId
+    cluster    = $clusterMoref
     storage_specs = @(@{ policy=$pol.policy; limit=204800 })
-    access_list   = @(@{ subject_name='administrator'; subject_type='USER'; domain='vsphere.local'; role='EDIT' })
+    access_list   = @(@{ subject='administrator'; subject_type='USER'; domain='vsphere.local'; role='EDIT' })
 }
 Vc-Post '/api/vcenter/namespaces/instances' $body | Out-Null
 Write-Host "✓ namespace '$NS_NAME' 建立中" -ForegroundColor Green

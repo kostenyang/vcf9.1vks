@@ -16,6 +16,10 @@ import sys
 import urllib3
 import requests
 
+# Force UTF-8 console output so ✓/⚠ characters print on Windows
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── Lab 連線 ──────────────────────────────────────────────────────────────────
@@ -52,6 +56,8 @@ EXT_IPBLOCK_ID = "vcf-m02-vks-ext-ipblock"
 PRIV_TGW_ID    = "vcf-m02-vks-priv-tgw"
 VPC_PROFILE_ID = "vcf-m02-vks-vpc-profile"
 VNA_CLUSTER_ID = "vcf-m02-vna-01"
+DVC_ID         = "vcf-m02-dvc"          # DistributedVlanConnection (DTGW uplink)
+TGW_ATTACH_ID  = "vcf-m02-dvc-attach"  # TransitGatewayAttachment (references DVC)
 
 # VKS namespace / cluster
 NS_NAME       = "vks-automation"

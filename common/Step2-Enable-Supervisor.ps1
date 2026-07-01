@@ -98,8 +98,9 @@ if ($DryRun) {
     exit 0
 }
 
-Write-Host "`n送出 Supervisor 啟用..." -ForegroundColor Yellow
-try { $r = Vc-Post '/api/vcenter/namespace-management/supervisors' $spec; Write-Host "✓ 已接受" -ForegroundColor Green; $r|ConvertTo-Json -Depth 4|Write-Host }
+Write-Host "`n送出 Supervisor 啟用 (enableOnComputeCluster, cluster=$clId)..." -ForegroundColor Yellow
+$enableBody = @{ cluster = $clId; spec = $spec }
+try { $r = Vc-Post '/api/vcenter/namespace-management/supervisors?action=enableOnComputeCluster' $enableBody; Write-Host "✓ 已接受" -ForegroundColor Green; $r|ConvertTo-Json -Depth 4|Write-Host }
 catch { Write-Host "✗ $($_.ErrorDetails.Message)" -ForegroundColor Red; exit 1 }
 
 # ── 輪詢 ──────────────────────────────────────────────────────────────────────

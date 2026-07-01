@@ -62,17 +62,29 @@ CLUSTER_MANIFEST = {
 }
 
 
+def _kubectl_login(extra_args=None):
+    """kubectl vsphere login via KUBECTL_VSPHERE_PASSWORD env var (--vsphere-password flag removed in newer plugin)."""
+    import os
+    env = os.environ.copy()
+    env["PATH"] = r"C:\Users\Administrator\vks-tools\bin;" + env.get("PATH", "")
+    env["KUBECTL_VSPHERE_PASSWORD"] = lab.VCPASS
+    cmd = [lab.KUBECTL, "vsphere", "login",
+           f"--server={lab.SUP_API_VIP}",
+           f"--vsphere-username={lab.VCUSER}",
+           "--insecure-skip-tls-verify"]
+    if extra_args:
+        cmd += extra_args
+    subprocess.run(cmd, check=True, env=env)
+
+
 def apply_with_kubectl():
+    import os
     import time
     import yaml  # pip install pyyaml
 
     # 1. kubectl-vsphere login → 建立 kubeconfig context
     print("=== 登入 Supervisor ===")
-    subprocess.run([lab.KUBECTL, "vsphere", "login",
-                    f"--server={lab.SUP_API_VIP}",
-                    f"--vsphere-username={lab.VCUSER}",
-                    f"--vsphere-password={lab.VCPASS}",
-                    "--insecure-skip-tls-verify"], check=True)
+    _kubectl_login()
     subprocess.run([lab.KUBECTL, "config", "use-context", lab.NS_NAME], check=True)
 
     # 2. Apply Cluster CR（若已存在跳過）
@@ -115,13 +127,10 @@ def apply_with_kubectl():
     # 4. 取 kubeconfig
     if phase == "Provisioned":
         print("\n=== 下載 kubeconfig ===")
-        subprocess.run([lab.KUBECTL, "vsphere", "login",
-                        f"--server={lab.SUP_API_VIP}",
-                        f"--vsphere-username={lab.VCUSER}",
-                        f"--vsphere-password={lab.VCPASS}",
-                        f"--tanzu-kubernetes-cluster-name={lab.VKS_CLUSTER}",
-                        f"--tanzu-kubernetes-cluster-namespace={lab.NS_NAME}",
-                        "--insecure-skip-tls-verify"], check=True)
+        _kubectl_login([
+            f"--tanzu-kubernetes-cluster-name={lab.VKS_CLUSTER}",
+            f"--tanzu-kubernetes-cluster-namespace={lab.NS_NAME}",
+        ])
         import os
         kc = os.path.expanduser(f"~\\.kube\\{lab.VKS_CLUSTER}.yaml")
         os.makedirs(os.path.dirname(kc), exist_ok=True)
