@@ -6,6 +6,9 @@
 
 兩條網路路線，**四種方法（UI / API / Python / PowerShell）**都涵蓋。
 
+VCF 9.1 離線環境另見 [`airgap/`](airgap/)：使用 Software Depot OCI registry 的 bundle
+規劃、Admin Host preflight、上傳流程與測試（不含任何 credential）。
+
 > ✅ **2026-06-08 實機跑通**：Path A（DTGW+VNA）端到端啟 Supervisor → 建 namespace →
 > 建 VKS cluster `vks-auto-01`（v1.34.2，CP+worker 都 Ready）。踩坑與修正見
 > [research/05](research/05-test-execution.md)。
@@ -128,6 +131,7 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 | [research/03-edge-ctgw-research.md](research/03-edge-ctgw-research.md) | Edge cluster + centralized TGW 研究 |
 | [research/04-nsx-schemas.md](research/04-nsx-schemas.md) | 從 NSX 9.1 live OpenAPI 撈的真實 schema 參考 |
 | [research/05-test-execution.md](research/05-test-execution.md) | 實測執行紀錄：DryRun、已建資源、抓到的 /26 邊界 bug |
+| [research/06-airgap-preflight.md](research/06-airgap-preflight.md) | VCF 9.1 air-gap 工具測試、lab 唯讀連線與 Depot `/v2/` 判讀 |
 | [screenshots/README.md](screenshots/README.md) | **實機 UI walkthrough**：live vCenter Activate Supervisor wizard 逐步（7 步）驗證 |
 
 ---
