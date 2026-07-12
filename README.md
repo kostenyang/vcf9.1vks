@@ -9,6 +9,10 @@
 VCF 9.1 離線環境另見 [`airgap/`](airgap/)：使用 Software Depot OCI registry 的 bundle
 規劃、Admin Host preflight、上傳流程與測試（不含任何 credential）。
 
+> ✅ **2026-07-12 Registry實機寫入驗證**：修復 VCF Fleet distribution registry 後，
+> 已完成 OCI blob upload、manifest PUT/GET；Fleet DNS/VIP與完整 VKS bundle搬運仍待完成。
+> 詳見 [research/06](research/06-airgap-preflight.md)。
+
 > ✅ **2026-06-08 實機跑通**：Path A（DTGW+VNA）端到端啟 Supervisor → 建 namespace →
 > 建 VKS cluster `vks-auto-01`（v1.34.2，CP+worker 都 Ready）。踩坑與修正見
 > [research/05](research/05-test-execution.md)。
