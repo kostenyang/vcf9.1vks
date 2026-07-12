@@ -1,7 +1,7 @@
-# 06 — VCF 9.1 VKS air-gap preflight（2026-07-12）
+# 06 — VCF 9.1 VKS air-gap 實測（2026-07-12）
 
-本次新增 [`../airgap/`](../airgap/) 工具並從 Codex 主機對現有 lab 做**唯讀**驗證；沒有安裝
-Supervisor Service、上傳 OCI image 或變更任何 VCF 資源。
+本次新增 [`../airgap/`](../airgap/) 工具，先從 Codex 主機做 preflight，接著實際修復 VCF
+Software Depot distribution registry，並完成 OCI artifact write/read smoke test。
 
 ## 已驗證
 
@@ -12,32 +12,64 @@ Supervisor Service、上傳 OCI image 或變更任何 VCF 資源。
 | download / upload command generation | PASS |
 | vCenter `192.168.114.11:443` | TCP PASS（unsandboxed host network）|
 | 現有 download server `172.16.10.50:443` | TCP PASS |
-| `https://172.16.10.50/v2/` | **HTTP 404** |
+| `https://172.16.10.50/v2/` | **HTTP 404**，不是 OCI registry |
+| Fleet registry pod `/v2/` | **HTTP 200**, `Docker-Distribution-Api-Version: registry/2.0` |
+| OCI config blob upload | PASS |
+| OCI manifest PUT + GET | PASS |
+| smoke artifact | `codex-airgap-smoke:20260712` |
+| manifest digest | `sha256:1743cc4d36219b8666928dd3989a0449c31086911ba55365e240f8d351ca80c7` |
 
-## 關鍵判讀
+## Registry endpoint
 
-`172.16.10.50` 現在是存放 VCF download-tool binaries 的 nginx/depot server，但 `/v2/` 回 404，
-所以它**不是目前可供 VKS 使用的 OCI Registry endpoint**。不可把它直接填入
-`airgap/config.json` 的 `depot_fqdn`。
+`172.16.10.50` 是存放 VCF download-tool binaries 的 nginx server，但 `/v2/` 回 404，不能
+填入 `airgap/config.json` 的 `depot_fqdn`。
 
-VCF 9.1 air-gap 下一步必須先從 VCF Fleet / Software Depot UI 或 API 取得 distribution registry
-的實際 FQDN，並確認：
+從 VCF Management Platform Gateway API route 實際找到 distribution registry 的外部入口：
 
 ```text
-GET https://<distribution-registry-fqdn>/v2/
+https://kosten-vcf91-fleet.rtolab.local/v2/
 ```
 
-回覆 HTTP 200，或未登入時回 HTTP 401。取得正確 FQDN 後，再從 air-gap Admin Host 執行：
+VCF 內部 route 是 `/v2` → `depot-service:7443`，後端 distribution service提供
+`5000/TCP` 與 `5443/TCP`。正常外部驗證應為 HTTP 200，或未登入時 HTTP 401：
 
 ```bash
 python3 airgap_tool.py --config config.json check
 ```
 
-## 尚未聲稱完成
+## 實際發現並修復的 platform 故障
 
-- 尚未取得 Software Depot distribution registry FQDN。
-- 尚未搬移 VKS Service / Standard Packages OCI bundles。
+一開始無法進行 upload，不是 air-gap script本身問題，而是 VCF Management Platform已故障：
+
+1. `distribution-service` pod為 `0/1 Unknown`，Service沒有 endpoint。
+2. Deployment無法重建，因 Kyverno admission webhook `connection refused`。
+3. Kyverno五個 pod卡在 `.18` node，該 node的 Antrea agent已連續 13 天 readiness失敗。
+4. Flux `source-controller` 也為 `Unknown`，使 `vmsp-global-config` 與 Depot HelmRelease無法 reconcile。
+
+實際修復順序：
+
+1. 刪除 stale Antrea DaemonSet pod；因 `.18` kubelet/container runtime卡住而無法完成 termination。
+2. vCenter graceful guest restart失敗（Tools API回報 Tools not running）。
+3. 對 worker VM `kosten-vcf91-vspp-s9wz5` 執行 vCenter reset；control-plane未重啟。
+4. `.18` 回到 `Ready`，新 Antrea pod `2/2 Running`。
+5. Kyverno三個 admission replicas與 background/cleanup controllers全部恢復 `Ready`。
+6. 刪除 stale Flux `source-controller` pod，Deployment重建為 `1/1 Running`。
+7. `vmsp-global-config`、`cert-manager`、`kyverno`、`depot-service`、`distribution-service`
+   HelmRelease全部回到 `Ready=True`。
+8. 刪除 stale distribution pod；新 pod `1/1 Running`，endpoint為
+   `198.18.1.10:5000,5443`。
+
+Registry恢復後，實際使用 OCI Distribution API上傳 2-byte config blob與無 layer manifest，
+再以 tag GET回來，取得 HTTP 200與上述 digest。這證明 registry data path確實可寫。
+
+## 尚未完成
+
+- Fleet FQDN `kosten-vcf91-fleet.rtolab.local` 尚未建立 DNS記錄。
+- Gateway LoadBalancer IP `.43/.44/.45/.86` 從 Admin Host TCP/443尚不可達。
+- 尚未使用 `imgpkg` 搬移完整 VKS Service / Standard Packages bundles。
 - 尚未驗證 Supervisor 與 VKS nodes 對 Depot CA 的 trust。
 - 尚未在完全斷網條件下新建另一個 VKS cluster。
 
-因此目前結論是「工具與管理路徑 preflight 已驗證」，不是「air-gap VKS 已端到端完成」。
+因此目前結論是「Software Depot Registry已實際修復並完成 OCI write/read」，不是「完整
+air-gap VKS cluster已端到端完成」。下一步須先修好 Fleet DNS/VIP，再從 Admin Host執行
+`imgpkg` bundle upload。
