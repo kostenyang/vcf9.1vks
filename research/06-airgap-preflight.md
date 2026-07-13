@@ -62,10 +62,23 @@ python3 airgap_tool.py --config config.json check
 Registry恢復後，實際使用 OCI Distribution API上傳 2-byte config blob與無 layer manifest，
 再以 tag GET回來，取得 HTTP 200與上述 digest。這證明 registry data path確實可寫。
 
+## DNS查核更正
+
+先前使用 jumpbox預設 resolver查不到 Fleet FQDN，不能據此判定 lab沒有 DNS。依
+`kostenyang/lab-info`，`rtolab.local`權威 DNS是 `192.168.114.200`。直接指定該 DNS查詢已確認：
+
+| FQDN | A record |
+|---|---|
+| `kosten-vcf91-fleet.rtolab.local` | `192.168.114.45` |
+| `kosten-vcf91-vsp.rtolab.local` | `192.168.114.43` |
+| `kosten-vcf91-vspp.rtolab.local` | `192.168.114.44` |
+
+因此 Fleet DNS記錄存在；先前結論是 resolver context錯誤。後續所有 lab DNS判讀以
+`lab-info`指定的 `.200`權威 DNS為準。
+
 ## 尚未完成
 
-- Fleet FQDN `kosten-vcf91-fleet.rtolab.local` 尚未建立 DNS記錄。
-- Gateway LoadBalancer IP `.43/.44/.45/.86` 從 Admin Host TCP/443尚不可達。
+- 尚未在 platform恢復後，從正確 DNS context重新驗證 Fleet `.45:443`的官方外部 upload path。
 - 尚未使用 `imgpkg` 搬移完整 VKS Service / Standard Packages bundles。
 - 尚未驗證 Supervisor 與 VKS nodes 對 Depot CA 的 trust。
 - 尚未在完全斷網條件下新建另一個 VKS cluster。

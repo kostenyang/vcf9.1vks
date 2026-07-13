@@ -5,6 +5,8 @@
 
 官方主流程：<https://github.com/vmware/vsphere-supervisor/blob/main/airgapped/air-gapped-vcf91.md>
 
+先看「到底要抓哪些離線檔案」：[`OFFICIAL-DOWNLOAD-CHECKLIST.md`](OFFICIAL-DOWNLOAD-CHECKLIST.md)。
+
 ## 安全界線
 
 - `airgap_tool.py` 是唯讀規劃／檢查工具，不會修改 vCenter、Supervisor 或 Depot。
