@@ -98,22 +98,49 @@ govc library.ls '/supervisor-local/*'
 > TKr OVA 已把核心元件容器 image(antrea/coredns/etcd/kube-*)**預載進 containerd**,
 > 所以「裸 Ready」最小 guest cluster **只靠本地 CL + OVA 就能起,零外部 registry**。
 
-### ① 連網側:取 TKr OVA 並打包
+TKr 來自 VMware 公開 subscribed CL:**`https://wp-content.vmware.com/v2/latest/`**(vcsp v2 格式,**免帳號、純 HTTPS**)。
+`lib.json` → `items.json`(126 個 item)列出所有版本;每個 item = **4 檔**(`photon-ova.ovf` + `photon-ova-disk1.vmdk`〔主檔 5–7GB〕+ `.mf` + `.cert`)。
+
+**列出可抓的版本**(2026-07 實查,對 Supervisor 9.1.0.0200 / spherelet 1.30-1.32 用新的 `vkr` 系列):
+| item(資料夾名) | k8s | OS | 大小 |
+|---|---|---|---|
+| `ob-24945258-photon-5-amd64-v1.32.7---vmware.3-fips-vkr.1` | 1.32.7 | photon-5 | 5.72 GB |
+| `ob-24941856-photon-5-amd64-v1.31.11---vmware.3-fips-vkr.1` | 1.31.11 | photon-5 | 5.06 GB |
+| `ob-24749206-photon-5-amd64-v1.30.11---vmware.1-fips-vkr.2` | 1.30.11 | photon-5 | 5.43 GB |
+| (ubuntu-2204 版各多 ~1.5GB) | | | |
+> 🔴 相容性以 Supervisor 綁定後 `kubectl get tkr` 的 `COMPATIBLE=True` 為準;photon 比 ubuntu 小,最小 demo 選 photon。
+
+#### 方法 b(推薦,不需 vCenter):直接 HTTP 抓 4 檔
 ```bash
-# 對外側任一能連網的 vC 建 subscribed CL 指 wp-content,只同步要的版本再匯出
-govc library.create -sub=https://wp-content.vmware.com/v2/latest/lib.json -sub-autosync=false tkr-online
-govc library.ls /tkr-online/*                          # 找 v1.30.1---vmware.1
-govc library.sync   /tkr-online/photon-ova-v1.30.1*
-govc library.export /tkr-online/photon-ova-v1.30.1* /data/tkr/
-cd /data/tkr && tar czf vks-tkr-v1.30.1.tgz photon-ova-v1.30.1*/   # 打成一包好搬
+BASE=https://wp-content.vmware.com/v2/latest
+ITEM=ob-24945258-photon-5-amd64-v1.32.7---vmware.3-fips-vkr.1   # ← 換成要的版本
+mkdir -p "$ITEM"
+# 🔴 一定要 -C - 續傳 + --retry:wp-content/CDN 會「HTTP 200 但檔案截斷」(實測 5.72GB 只下到 4.23GB)
+for f in photon-ova.mf photon-ova.ovf photon-ova.cert photon-ova-disk1.vmdk; do
+  curl -fSL -C - --retry 8 --retry-delay 3 --retry-all-errors -o "$ITEM/$f" "$BASE/$ITEM/$f"
+done
+# 🔴 必做:用 .mf 的 SHA256 校驗完整性(HTTP 200 ≠ 完整!)
+cd "$ITEM" && sha256sum -c <(awk -F'[()= ]+' '/SHA256/{print $3"  "$2}' photon-ova.mf)
+#   Windows 用 PowerShell(別用 Node readFileSync,>2GB 會 ERR_FS_FILE_TOO_LARGE):
+#   Get-FileHash photon-ova-disk1.vmdk -Algorithm SHA256   # 比對 .mf
+tar czf ../vks-tkr-1.32.7.tgz .          # 校驗過才打包搬過氣隙
 ```
-> TKr 版本上限 = Supervisor 的 TKG service 支援上限,先確認相容矩陣。
+> 實測本專案:photon v1.32.7 首抓 curl 回 HTTP 200 但只 4.23GB(SHA 不符)→ `curl -C -` 續傳補到 5,717,611,520 bytes → **SHA256 相符**才算完成。
+
+#### 方法 a(有連網 vCenter 時):subscribed CL → sync → export
+```bash
+govc library.create -sub=$BASE/lib.json -sub-autosync=false tkr-online
+govc library.ls /tkr-online/*                             # 找對版 item 全名
+govc library.sync   '/tkr-online/ob-24945258-photon-5-amd64-v1.32.7*'
+govc library.export '/tkr-online/ob-24945258-photon-5-amd64-v1.32.7*' /data/tkr/
+cd /data/tkr && tar czf vks-tkr-1.32.7.tgz ob-24945258-*/
+```
 
 ### ③ 封閉側:PUSH 進 Local CL
 ```bash
-tar xzf vks-tkr-v1.30.1.tgz
-govc library.create -ds <datastore> vks-tkr
-govc library.import vks-tkr /data/tkr/photon-ova-v1.30.1*/photon-ova-v1.30.1*.ovf
+tar xzf vks-tkr-1.32.7.tgz -C tkr && cd tkr
+govc library.create -ds m01-cl01-ds-vsan01 vks-tkr
+govc library.import vks-tkr ./photon-ova.ovf     # govc 自動帶 disk1.vmdk;TKr item 名字不限
 govc library.ls /vks-tkr/*
 ```
 
@@ -128,7 +155,7 @@ govc library.ls /vks-tkr/*
    metadata: {name: vks-min, namespace: ns-vks}
    spec:
      topology:
-       controlPlane: {replicas: 1, vmClass: best-effort-small, storageClass: <policy>, tkr: {reference: {name: v1.30.1---vmware.1}}}
+       controlPlane: {replicas: 1, vmClass: best-effort-small, storageClass: <policy>, tkr: {reference: {name: v1.32.7---vmware.3-fips-vkr.1}}}   # 以 kubectl get tkr 實際字串為準
        nodePools: [{name: np-1, replicas: 1, vmClass: best-effort-small, storageClass: <policy>}]
    ```
    `kubectl get tkc,cluster,machine -n ns-vks` → node Ready(antrea 從 OVA cache 拉、不對外)。
@@ -158,6 +185,7 @@ Supervisor RUNNING + guest cluster Available 後,於 **VCF Automation → Contai
 4. **Supervisor 走 VDS+FLB 不碰 NSX**,air-gap 依賴最少。
 5. 時鐘/DNS/CA 一定要 air-gap 內自足(NTP 指內部源、DNS 自解、CA 匯入)。
 6. Git-Bash 跑 govc 要 `export MSYS_NO_PATHCONV=1`。
+7. **wp-content 下載會「HTTP 200 假完整」** —— 大檔(TKr vmdk 5–7GB)常靜默截斷。**必用 `curl -C - --retry` 續傳 + `.mf` 的 SHA256 校驗**;Windows 用 `Get-FileHash`(Node `readFileSync` >2GB 會爆)。整庫 >200GB,只抓要的 3+ 版。
 
 ## 一句話
 連網側 `library.export`+`tar` 打包 → 搬過氣隙 → 封閉側 `govc library.import` PUSH 進 **Local** CL(Supervisor bundle + TKr OVA)→ 綁 Supervisor / Namespace → 開單 CP cluster。**全程零外部 registry、零 HTTP server。**
