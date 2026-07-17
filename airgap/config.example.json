@@ -1,0 +1,22 @@
+{
+  "depot_fqdn": "depot.rtolab.local",
+  "work_dir": "/srv/vks-airgap",
+  "vcenter_fqdn": "kosten-vcf91-vc.rtolab.local",
+  "supervisor_endpoint": "supervisor.rtolab.local",
+  "tcp_endpoints": [
+    { "host": "depot.rtolab.local", "port": 443 },
+    { "host": "kosten-vcf91-vc.rtolab.local", "port": 443 },
+    { "host": "supervisor.rtolab.local", "port": 443 }
+  ],
+  "bundles": [
+    {
+      "name": "vks-standard-packages",
+      "source": "projects.packages.broadcom.com/vsphere/supervisor/vks-standard-packages/3.6.0-20260211/vks-standard-packages:3.6.0-20260211"
+    },
+    {
+      "name": "harbor-supervisor-service",
+      "source": "projects.packages.broadcom.com/vsphere/supervisor/harbor-service/2.14.2/harbor:v2.14.2_vmware.2-vks.1",
+      "optional": true
+    }
+  ]
+}
