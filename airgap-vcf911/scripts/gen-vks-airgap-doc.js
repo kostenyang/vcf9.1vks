@@ -87,7 +87,7 @@ const doc = new Document({
         '六、Step 4:啟用 Supervisor(VDS + Foundation LB)', '七、Step 5:建立 vSphere Namespace',
         '八、Step 6:開啟 Software Depot 的 OCI 上傳', '九、Step 7:搬移 VKS Standard Packages OCI 映像',
         '十、Step 8:部署 VKS guest cluster', '十一、Step 9:在 guest cluster 安裝 add-on(cert-manager)',
-        '十二、踩坑與排錯', '附錄 A:指令彙整', '附錄 B:CLI 輸出'].map(t => P(t, { after: 60 })),
+        '十二、踩坑與排錯', '十三、沒有 govc 怎麼做(工具對照)', '附錄 A:指令彙整', '附錄 B:CLI 輸出'].map(t => P(t, { after: 60 })),
     PB(),
 
     // 一
@@ -369,6 +369,19 @@ const doc = new Document({
        ['9', 'kubectl apply -f cluster.yaml 被 webhook 擋', '整份 apply 會掉 webhook 自動加的 bootstrapAddons → 改用 JSON patch 增量修改'],
        ['10', 'toggle 腳本 curl 讀不到檔', 'Git-Bash 下不要設 MSYS_NO_PATHCONV=1']],
       [5, 37, 58]),
+    PB(),
+
+    H1('十三、沒有 govc 怎麼做(工具對照)'),
+    P("本手冊指令以 govc 示範,但客戶現場常常沒有這支工具。以下是等價做法 —— PowerCLI 與 vSphere Client UI 不需要額外安裝任何東西。"),
+    H2('13.1 連線方式'),
+    CODE("# PowerCLI\nConnect-VIServer <vc> -User administrator@vsphere.local -Password '<pw>'\n\n# REST(vSphere Automation API)\nS=$(curl -sk -X POST -u 'administrator@vsphere.local:<pw>' https://<vc>/api/session | tr -d '\"')\nH=\"vmware-api-session-id: $S\"\n\n# govc(單檔 exe)\nexport GOVC_URL='https://<vc>' GOVC_USERNAME='administrator@vsphere.local' GOVC_PASSWORD='<pw>' GOVC_INSECURE=1\nexport MSYS_NO_PATHCONV=1      # Git-Bash 必加,否則 inventory 路徑會被轉成 C:\\..."),
+    H2('13.2 對照表'),
+    table(['動作', 'govc', 'PowerCLI', 'UI / REST'],
+      [["建訂閱式 Content Library", "library.create -sub <lib.json> -sub-autosync=true -ds <ds> <name>", "New-ContentLibrary -Name <n> -Datastore <ds> -SubscriptionUrl <url> -AutomaticSync", "UI:Content Libraries → CREATE → Subscribed;REST:POST /api/content/subscribed-library"], ["建本機 Content Library", "library.create -ds <ds> <name>", "New-ContentLibrary -Name <n> -Datastore <ds>", "UI:CREATE → Local;REST:POST /api/content/local-library"], ["匯入 OVF", "library.import -n <item> <lib> 'E:\\path\\x.ovf'", "New-ContentLibraryItem -ContentLibrary <lib> -Name <item> -ItemType ovf -Files 'E:\\path\\x.ovf'", "UI:CL → ACTIONS → Import Item(.ovf/.vmdk/.mf/.cert 要一起選);REST 需四步"], ["列 CL / item", "library.ls;library.ls '/<lib>/*'", "Get-ContentLibrary / Get-ContentLibraryItem", "REST:GET /api/content/local-library、GET /api/content/library/item?library_id="], ["指派 K8s 映像庫", "無對應", "無對應", "UI:Supervisor → Configure → Kubernetes Services → Content Library → EDIT;REST:PATCH namespace-management/clusters/{c}"], ["建 workload port group", "dvs.portgroup.add -dvs <vds> -type earlyBinding -vlan 5 <name>", "New-VDPortgroup -VDSwitch <vds> -Name <n> -VlanId 5", "UI:Networking → VDS → ACTIONS → Distributed Port Group → New"], ["promiscuous / forged / MAC", "繁瑣", "ReconfigureDVPortgroup_Task + DVSSecurityPolicy", "UI:dvPortgroup → Edit → Security(三項 Accept)"], ["主機 esxcli", "host.esxcli -host.ip <ip> <cmd>", "(Get-EsxCli -VMHost <h> -V2).<ns>.<cmd>.Invoke()", "ESXi Shell / SSH"], ["VM 內執行指令", "guest.run -vm <vm> -- <cmd>", "Invoke-VMScript -VM <vm> -ScriptText '<cmd>'", "Guest Operations API"], ["建 vSphere Namespace", "無對應", "無對應", "UI:Namespaces → CREATE NAMESPACE;REST:POST /api/vcenter/namespaces/instances/v2"], ["vLCM remediate(spherelet)", "無對應", "vLCM cmdlet(有限)", "UI:Cluster → Updates → Image → REMEDIATE ALL;REST:software?action=apply"], ["guest cluster / add-on", "無對應", "無對應", "kubectl(Cluster / PackageRepository / PackageInstall)"]],
+      [15, 25, 26, 34]),
+    H2('13.3 REST 實例(本 lab 實測格式)'),
+    CODE("curl -sk -X POST -H \"$H\" -H 'Content-Type: application/json' \\\n  https://<vc>/api/content/subscribed-library -d '{\n    \"name\": \"vkr-depot\",\n    \"type\": \"SUBSCRIBED\",\n    \"storage_backings\": [ { \"type\": \"DATASTORE\", \"datastore_id\": \"datastore-15\" } ],\n    \"subscription_info\": {\n      \"subscription_url\": \"http://<depot>:8888/PROD/COMP/VKR/lib.json\",\n      \"authentication_method\": \"NONE\",\n      \"automatic_sync_enabled\": true,\n      \"on_demand\": false } }'\n\n# 查 moref\ncurl -sk -H \"$H\" https://<vc>/api/vcenter/datastore | jq -r '.[]|\"\\(.datastore)  \\(.name)\"'\n#   datastore-15  m01-cl01-ds-vsan01\ncurl -sk -H \"$H\" https://<vc>/api/vcenter/cluster   | jq -r '.[]|\"\\(.cluster)  \\(.name)\"'\n#   domain-c9  m01-cl01"),
+    NOTE("現場沒有 govc 的建議組合:Content Library 建立與 OVF 匯入用 PowerCLI(一行完成,REST 要四步);Supervisor / Namespace / 映像庫指派這些本來就沒有 govc 對應的動作用 UI 或 REST;guest cluster 與 add-on 一律 kubectl。", 'E8F5E9', C.green),
     PB(),
 
     // 附錄
