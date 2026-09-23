@@ -276,6 +276,75 @@ vcf addon install cert-manager --addon-release-name cert-manager.kubernetes.vmwa
 | 9 | `kubectl apply` cluster.yaml 被 webhook 擋 | 會掉 `bootstrapAddons` → 改用 JSON patch |
 | 10 | toggle 腳本 curl 讀不到檔 | Git-Bash 下不要設 `MSYS_NO_PATHCONV=1` |
 
+---
+
+## 附:沒有 govc 怎麼做(govc ↔ PowerCLI ↔ UI ↔ REST 對照)
+
+本文指令以 `govc` 示範,但客戶現場常常沒有。以下是等價做法 —— **PowerCLI 與 vSphere Client UI 不需要額外安裝任何東西**。
+
+### 先決:連線方式
+
+```powershell
+# PowerCLI
+Connect-VIServer <vc> -User administrator@vsphere.local -Password '<pw>'
+```
+
+```bash
+# REST(vSphere Automation API)— 取得 session token
+S=$(curl -sk -X POST -u 'administrator@vsphere.local:<pw>' https://<vc>/api/session | tr -d '"')
+H="vmware-api-session-id: $S"
+```
+
+```bash
+# govc(單檔 exe,靠環境變數)
+export GOVC_URL='https://<vc>' GOVC_USERNAME='administrator@vsphere.local' \
+       GOVC_PASSWORD='<pw>' GOVC_INSECURE=1
+export MSYS_NO_PATHCONV=1          # Git-Bash 必加,否則 inventory 路徑會被轉成 C:\...
+```
+
+### 對照表
+
+| 動作 | govc | PowerCLI | vSphere Client UI | REST |
+|---|---|---|---|---|
+| 建**訂閱式** CL | `library.create -sub <lib.json> -sub-autosync=true -ds <ds> <name>` | `New-ContentLibrary -Name <n> -Datastore <ds> -SubscriptionUrl <url> -AutomaticSync -DownloadContentOnDemand:$false` | Content Libraries → CREATE → Subscribed | `POST /api/content/subscribed-library` |
+| 建**本機** CL | `library.create -ds <ds> <name>` | `New-ContentLibrary -Name <n> -Datastore <ds>` | Content Libraries → CREATE → Local | `POST /api/content/local-library` |
+| 匯入 OVF | `library.import -n <item> <lib> 'E:\path\x.ovf'` | `New-ContentLibraryItem -ContentLibrary <lib> -Name <item> -ItemType ovf -Files 'E:\path\x.ovf'` | 進 CL → ACTIONS → **Import Item**(**.ovf + .vmdk + .mf + .cert 要一起選**) | 四步:建 item → 開 update-session → 逐檔 add+PUT → complete |
+| 列 CL / item | `library.ls` / `library.ls '/<lib>/*'` | `Get-ContentLibrary` / `Get-ContentLibraryItem` | Content Libraries 清單 | `GET /api/content/local-library`、`GET /api/content/library/item?library_id=<id>` |
+| 指派 K8s 映像庫 | **無對應** | **無對應** | Supervisor → Configure → Kubernetes Services → Content Library → EDIT | `PATCH /api/vcenter/namespace-management/clusters/{c}`<br>`{"default_kubernetes_service_content_library":"<libId>"}` |
+| 建 workload port group | `dvs.portgroup.add -dvs <vds> -type earlyBinding -nports 128 -vlan 5 <name>` | `New-VDPortgroup -VDSwitch <vds> -Name <n> -VlanId 5 -NumPorts 128` | Networking → VDS → ACTIONS → Distributed Port Group → New | `CreateDVPortgroup_Task`(SOAP) |
+| 開 promiscuous / forged / MAC | 繁瑣(`object.method`) | `ReconfigureDVPortgroup_Task` + `DVSSecurityPolicy` | dvPortgroup → Edit → Security(三項都 Accept) | SOAP |
+| 主機 esxcli | `host.esxcli -host.ip <ip> <cmd>` | `(Get-EsxCli -VMHost <h> -V2).<ns>.<cmd>.Invoke()` | ESXi Shell / SSH | SOAP |
+| VM 內執行指令 | `guest.run -vm <vm> -- <cmd>` | `Invoke-VMScript -VM <vm> -ScriptText '<cmd>'` | — | Guest Operations API |
+| 建 vSphere Namespace | **無對應** | **無對應** | Supervisor Management → Namespaces → CREATE NAMESPACE | `POST /api/vcenter/namespaces/instances/v2` |
+| vLCM remediate(裝 spherelet) | **無對應** | vLCM cmdlet(有限) | Cluster → Updates → Image → REMEDIATE ALL | `POST /api/esx/settings/clusters/{c}/software?action=apply&vmw-task=true` |
+| guest cluster / addon | **無對應** | **無對應** | Supervisor Management(檢視為主) | `kubectl`(Cluster / PackageRepository / PackageInstall CR) |
+
+### REST 實例(本 lab 實測回應格式)
+
+```bash
+# 建訂閱式 CL —— datastore_id 用 moref
+curl -sk -X POST -H "$H" -H 'Content-Type: application/json' \
+  https://<vc>/api/content/subscribed-library -d '{
+    "name": "vkr-depot",
+    "type": "SUBSCRIBED",
+    "storage_backings": [ { "type": "DATASTORE", "datastore_id": "datastore-15" } ],
+    "subscription_info": {
+      "subscription_url": "http://<depot>:8888/PROD/COMP/VKR/lib.json",
+      "authentication_method": "NONE",
+      "automatic_sync_enabled": true,
+      "on_demand": false } }'
+
+# 查 moref
+curl -sk -H "$H" https://<vc>/api/vcenter/datastore | jq -r '.[]|"\(.datastore)  \(.name)"'
+#   datastore-15  m01-cl01-ds-vsan01
+curl -sk -H "$H" https://<vc>/api/vcenter/cluster   | jq -r '.[]|"\(.cluster)  \(.name)"'
+#   domain-c9  m01-cl01
+```
+
+> **現場沒有 govc 的建議組合**:CL 建立與 OVF 匯入用 **PowerCLI**(一行完成,REST 要四步);
+> Supervisor / Namespace / 映像庫指派這些**本來就沒有 govc 對應**的動作用 **UI 或 REST**;
+> guest cluster 與 add-on 一律 **kubectl**。
+
 ## 目錄
 
 | 路徑 | 內容 |
