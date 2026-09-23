@@ -1,0 +1,9 @@
+### C. Software Depot OCI registry(上傳已啟用)
+$ ./toggle_software_depot_oci_image_upload.sh enable --vsp-host vcf-m02-vsp01.home.lab --admin-username admin
+Software Depot config update is success!
+
+$ python oci_image_depot_migrator.py copy -s projects.packages.broadcom.com/vsphere/supervisor/vks-standard-packages/3.7.0-20260618/vks-addons:3.7.0-20260618 -t vcf-m02-fleet01.home.lab
+vcf-m02-fleet01.home.lab/vks-standard-packages/ga/3.7.0-20260618/vks-addons
+
+$ curl -sk https://vcf-m02-fleet01.home.lab/v2/_catalog
+{"repositories":["vks-standard-packages/ga/3.7.0-20260618/vks-addons"]}

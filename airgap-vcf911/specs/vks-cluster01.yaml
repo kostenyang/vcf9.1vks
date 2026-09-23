@@ -1,0 +1,36 @@
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: Cluster
+metadata:
+  name: vks-cl01
+  namespace: vks-ns01
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["172.20.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/16"]
+  topology:
+    classRef:
+      name: builtin-generic-v3.3.0
+    version: v1.36.2+vmware.2-vkr.3
+    controlPlane:
+      replicas: 1
+    workers:
+      machineDeployments:
+        - class: node-pool
+          name: np1
+          replicas: 1
+    variables:
+      - name: vmClass
+        value: best-effort-small
+      - name: storageClass
+        value: vsan-default-storage-policy
+      - name: osConfiguration
+        value:
+          trust:
+            additionalTrustedCAs:
+              - caCert:
+                  content: |
+                    -----BEGIN CERTIFICATE-----
+                    <vCenter VMCA root CA:https://<vc>/certs/download.zip 取 certs/lin/<hash>.0>
+                    -----END CERTIFICATE-----

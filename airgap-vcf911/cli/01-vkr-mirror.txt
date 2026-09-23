@@ -1,0 +1,14 @@
+### A. VKr 鏡像到自建 depot(token-only)
+$ pwsh My-VcfDepot.v3.ps1 -TokenFile token.txt -Component VKR -Summary
+Components: 1   Files: 1006   Total: 750.38 GB
+
+$ ls -la /depot/PROD/COMP/VKR/
+total 24
+drwxr-xr-x  4 root root 4096 Sep 23 00:53 .
+drwxr-xr-x 28 root root 4096 Sep 23 00:50 ..
+-rw-r--r--  1 root root 3014 Sep 23 00:53 items.json
+-rw-r--r--  1 root root  323 Sep 23 00:53 lib.json
+drwxr-xr-x  2 root root 4096 Sep 23 00:51 ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3
+drwxr-xr-x  2 root root 4096 Sep 23 00:52 ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3
+
+5.9G	/depot/PROD/COMP/VKR

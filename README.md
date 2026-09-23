@@ -142,3 +142,9 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 2. 或 dry-run 模式先驗證 payload，再正式送。
 
 所有 `Step*.ps1` 都支援 `-DryRun`（印 payload 不送出）。
+
+## VCF 9.1.1 air-gap(2026-09 新增)
+
+[`airgap-vcf911/`](airgap-vcf911/) — 在完全離線的 **VCF 9.1.1** 上啟用 Supervisor(VDS + **Foundation Load Balancer**,不用 Avi)、
+開 VKS guest cluster(v1.36.2),並用**自建 Software Depot 的 OCI registry** 安裝 VKS Standard Packages(cert-manager)。
+Step 1~9 全程截圖,含 23 頁 docx 手冊與可重跑腳本。

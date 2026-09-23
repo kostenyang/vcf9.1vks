@@ -1,0 +1,92 @@
+{
+ "items": [
+  {
+   "created": "2026-08-17T05:53:37.570472",
+   "description": "",
+   "version": "2",
+   "id": "urn:uuid:e211c9d5-3c7e-47df-a605-ed75743b22c8",
+   "name": "ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3",
+   "selfHref": "ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3/item.json",
+   "files": [
+    {
+     "name": "photon-5-amd64-v1.35.6---vmware.2-vkr.3-disk1.vmdk",
+     "size": 2813217280,
+     "etag": "922d738cd4eadb11df9c0a0f17571c95",
+     "hrefs": [
+      "ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3/photon-5-amd64-v1.35.6---vmware.2-vkr.3-disk1.vmdk"
+     ]
+    },
+    {
+     "name": "photon-5-amd64-v1.35.6---vmware.2-vkr.3.ovf",
+     "size": 183486,
+     "etag": "922d738cd4eadb11df9c0a0f17571c95",
+     "hrefs": [
+      "ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3/photon-5-amd64-v1.35.6---vmware.2-vkr.3.ovf"
+     ]
+    },
+    {
+     "name": "photon-5-amd64-v1.35.6---vmware.2-vkr.3.mf",
+     "size": 243,
+     "etag": "922d738cd4eadb11df9c0a0f17571c95",
+     "hrefs": [
+      "ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3/photon-5-amd64-v1.35.6---vmware.2-vkr.3.mf"
+     ]
+    },
+    {
+     "name": "photon-5-amd64-v1.35.6---vmware.2-vkr.3.cert",
+     "size": 1940,
+     "etag": "922d738cd4eadb11df9c0a0f17571c95",
+     "hrefs": [
+      "ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3/photon-5-amd64-v1.35.6---vmware.2-vkr.3.cert"
+     ]
+    }
+   ],
+   "type": "vcsp.ovf",
+   "properties": {}
+  },
+  {
+   "created": "2026-08-17T06:15:40.863243",
+   "description": "",
+   "version": "2",
+   "id": "urn:uuid:04797310-1a9c-4a87-b018-e0a0a702264d",
+   "name": "ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3",
+   "selfHref": "ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3/item.json",
+   "files": [
+    {
+     "name": "photon-5-amd64-v1.36.2---vmware.2-vkr.3-disk1.vmdk",
+     "size": 3475693056,
+     "etag": "9506f21d8c3de4d5a8e4fc5e057792a9",
+     "hrefs": [
+      "ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3/photon-5-amd64-v1.36.2---vmware.2-vkr.3-disk1.vmdk"
+     ]
+    },
+    {
+     "name": "photon-5-amd64-v1.36.2---vmware.2-vkr.3.ovf",
+     "size": 183835,
+     "etag": "9506f21d8c3de4d5a8e4fc5e057792a9",
+     "hrefs": [
+      "ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3/photon-5-amd64-v1.36.2---vmware.2-vkr.3.ovf"
+     ]
+    },
+    {
+     "name": "photon-5-amd64-v1.36.2---vmware.2-vkr.3.mf",
+     "size": 243,
+     "etag": "9506f21d8c3de4d5a8e4fc5e057792a9",
+     "hrefs": [
+      "ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3/photon-5-amd64-v1.36.2---vmware.2-vkr.3.mf"
+     ]
+    },
+    {
+     "name": "photon-5-amd64-v1.36.2---vmware.2-vkr.3.cert",
+     "size": 1940,
+     "etag": "9506f21d8c3de4d5a8e4fc5e057792a9",
+     "hrefs": [
+      "ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3/photon-5-amd64-v1.36.2---vmware.2-vkr.3.cert"
+     ]
+    }
+   ],
+   "type": "vcsp.ovf",
+   "properties": {}
+  }
+ ]
+}

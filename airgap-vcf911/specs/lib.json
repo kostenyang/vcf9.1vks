@@ -1,0 +1,17 @@
+{
+ "vcspVersion": "2",
+ "contentVersion": "1",
+ "version": "1",
+ "name": "vkr-local",
+ "created": "2026-09-23T00:00:00.000000",
+ "itemsHref": "items.json",
+ "id": "urn:uuid:1ffc20b3-1213-4b0e-8a61-0e69d40487f8",
+ "capabilities": {
+  "transferIn": [
+   "httpGet"
+  ],
+  "transferOut": [
+   "httpGet"
+  ]
+ }
+}
