@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 *.kubeconfig
+airgap/config.json
+airgap/*-plan.sh
+airgap/*.tar
+airgap/depot-ca.crt
