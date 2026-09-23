@@ -1,0 +1,8 @@
+### B. 訂閱式 content library 指向自建 depot
+$ govc library.create -sub http://10.0.0.61:8888/PROD/COMP/VKR/lib.json -sub-autosync=true -ds m01-cl01-ds-vsan01 vkr-depot
+/vks-tkr
+/vkr-depot
+
+$ govc library.ls '/vkr-depot/*'
+/vkr-depot/ob-25653794-photon-5-amd64-v1.35.6---vmware.2-vkr.3
+/vkr-depot/ob-25650988-photon-5-amd64-v1.36.2---vmware.2-vkr.3

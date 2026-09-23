@@ -1,5 +1,7 @@
 # Air-Gap VKS 安裝 Runbook(封閉客戶端可執行)
 
+> ⚠️ **這份是 9.1.0 / TKr 時代的做法(2026-07)**。VCF **9.1.1** 請改看 [`../airgap-vcf911/README.md`](../airgap-vcf911/README.md) —— VKr + 自建 Software Depot OCI registry + Foundation Load Balancer,2026-09 端到端實測通過。
+
 > 目標:在**完全離線(air-gap)**的 VCF 9.1 環境把 **VKS(vSphere Kubernetes Service)**裝到能開 guest cluster,
 > **全程零外部 registry、零 subscribed HTTP server**。
 >

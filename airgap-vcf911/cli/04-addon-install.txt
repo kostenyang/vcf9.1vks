@@ -1,0 +1,22 @@
+### D. VKS guest cluster + addon(全部來自自建 depot)
+$ kubectl get pkgr -n tkg-system
+NAME               AGE   DESCRIPTION           PAUSED
+vks-addons-depot   83s   Reconcile succeeded   
+
+$ kubectl get pkg -n vks-addons | head
+NAME                                                                      PACKAGEMETADATA NAME                                VERSION                         AGE
+ako.kubernetes.vmware.com.2.2.1+vmware.1-vks.1                            ako.kubernetes.vmware.com                           2.2.1+vmware.1-vks.1            1m21s
+cert-manager.kubernetes.vmware.com.1.19.4+vmware.2-vks.1                  cert-manager.kubernetes.vmware.com                  1.19.4+vmware.2-vks.1           1m21s
+cert-manager.kubernetes.vmware.com.1.20.2+vmware.1-vks.1                  cert-manager.kubernetes.vmware.com                  1.20.2+vmware.1-vks.1           1m21s
+cilium.kubernetes.vmware.com.1.19.4+vmware.1-vks.1                        cilium.kubernetes.vmware.com                        1.19.4+vmware.1-vks.1           1m21s
+cluster-autoscaler.kubernetes.vmware.com.1.33.0+vmware.3-vks.1            cluster-autoscaler.kubernetes.vmware.com            1.33.0+vmware.3-vks.1           1m21s
+
+$ kubectl get pkgi -n vks-addons
+NAME           PACKAGE NAME                         PACKAGE VERSION         DESCRIPTION           AGE     PAUSED
+cert-manager   cert-manager.kubernetes.vmware.com   1.20.2+vmware.1-vks.1   Reconcile succeeded   7m58s   
+
+$ kubectl get pods -n cert-manager
+NAME                                       READY   STATUS    RESTARTS   AGE
+cert-manager-5d6f756597-2q4m6              1/1     Running   0          69s
+cert-manager-cainjector-77874c9c85-zp8mx   1/1     Running   0          69s
+cert-manager-webhook-74bb4767b7-c2xlp      1/1     Running   0          69s

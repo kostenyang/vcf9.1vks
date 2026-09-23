@@ -1,0 +1,9 @@
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: vks-addons-depot
+  namespace: tkg-system
+spec:
+  fetch:
+    imgpkgBundle:
+      image: vcf-m02-fleet01.home.lab/vks-standard-packages/ga/3.7.0-20260618/vks-addons:3.7.0-20260618
