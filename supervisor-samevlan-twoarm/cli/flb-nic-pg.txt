@@ -1,0 +1,3 @@
+Network adapter 1    -> dvportgroup-199
+Network adapter 2    -> dvportgroup-24
+Network adapter 3    -> dvportgroup-159

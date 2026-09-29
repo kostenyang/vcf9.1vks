@@ -1,0 +1,11 @@
+Command> shell
+Shell access is granted to root
+root@vcf-m02-vc01 [ ~ ]# strings /usr/lib/vmware-wcp/wcpsvc | grep -ao "Networks %s and %s have overlapping portgroup(s) and/or subnets, but do not have matching modes" | head -1
+Networks %s and %s have overlapping portgroup(s) and/or subnets, but do not have matching modes
+root@vcf-m02-vc01 [ ~ ]# grep -ao "vcenter.wcp.network[a-z.]*overlapping[a-z.]*" /usr/lib/vmware-wcp/wcpsvc | sort -u
+vcenter.wcp.network.dhcp.overlapping.modes.error
+vcenter.wcp.network.static.overlapping.modes.error
+root@vcf-m02-vc01 [ ~ ]# grep -ao "Management, Virtual Server, and Transit Networks cannot use the same port group." /usr/lib/vmware-wcp/wcpsvc | sort -u | head -2
+root@vcf-m02-vc01 [ ~ ]# exit
+logout
+Command> exit

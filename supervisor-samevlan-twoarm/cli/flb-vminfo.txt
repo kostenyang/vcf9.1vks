@@ -1,0 +1,10 @@
+Name:           flb-vcf-m02-sup01 (1)
+  Path:         /m01-dc01/vm/Namespaces/vcf-m02-sup01/flb-vcf-m02-sup01 (1)
+  UUID:         4212d01d-22ed-f38d-4ea3-2ec3ec79d448
+  Guest name:   VMware Photon OS (64-bit)
+  Memory:       4096MB
+  CPU:          2 vCPU(s)
+  Power state:  poweredOn
+  Boot time:    2026-09-29 13:23:09 +0000 UTC
+  IP address:   192.168.15.10
+  Host:         vcf-m02-esx01.home.lab

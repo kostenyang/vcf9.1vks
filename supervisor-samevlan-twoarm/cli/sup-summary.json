@@ -1,0 +1,22 @@
+{
+    "items": [
+        {
+            "supervisor": "de8325f8-21e7-40c1-96be-79ee97b264e8",
+            "info": {
+                "stats": {
+                    "cpu_used": 3975,
+                    "storage_capacity": 61236,
+                    "memory_used": 16526,
+                    "cpu_capacity": 157572,
+                    "memory_capacity": 485386,
+                    "storage_used": 21506
+                },
+                "APIEndpoint": "192.168.15.64",
+                "kubernetes_status": "READY",
+                "name": "vcf-m02-sup01",
+                "messages": [],
+                "config_status": "RUNNING"
+            }
+        }
+    ]
+}

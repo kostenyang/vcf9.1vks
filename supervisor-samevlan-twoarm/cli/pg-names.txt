@@ -1,0 +1,3 @@
+dvportgroup-199 = SDDC-Frontend-VM
+dvportgroup-24 = SDDC-DPortGroup-VM-Mgmt
+dvportgroup-159 = SDDC-Workload-VM

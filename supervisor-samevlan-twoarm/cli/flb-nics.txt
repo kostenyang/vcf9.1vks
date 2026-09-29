@@ -1,0 +1,39 @@
+Name:               ethernet-0
+  Type:             VirtualVmxnet3
+  Label:            Network adapter 1
+  Summary:          DVSwitch: 50 12 68 82 0a a4 b4 e4-ea 67 95 0a 0c 12 20 21
+  Key:              4000
+  Controller:       pci-100
+  Unit number:      7
+  Connected:        true
+  Start connected:  true
+  Guest control:    true
+  Status:           ok
+  MAC Address:      00:50:56:92:d4:ff
+  Address type:     assigned
+Name:               ethernet-1
+  Type:             VirtualVmxnet3
+  Label:            Network adapter 2
+  Summary:          DVSwitch: 50 12 68 82 0a a4 b4 e4-ea 67 95 0a 0c 12 20 21
+  Key:              4001
+  Controller:       pci-100
+  Unit number:      8
+  Connected:        true
+  Start connected:  true
+  Guest control:    true
+  Status:           ok
+  MAC Address:      00:50:56:92:ab:a3
+  Address type:     assigned
+Name:               ethernet-2
+  Type:             VirtualVmxnet3
+  Label:            Network adapter 3
+  Summary:          DVSwitch: 50 12 68 82 0a a4 b4 e4-ea 67 95 0a 0c 12 20 21
+  Key:              4002
+  Controller:       pci-100
+  Unit number:      9
+  Connected:        true
+  Start connected:  true
+  Guest control:    true
+  Status:           ok
+  MAC Address:      00:50:56:92:4d:6c
+  Address type:     assigned
