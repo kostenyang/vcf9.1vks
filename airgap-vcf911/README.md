@@ -1,6 +1,6 @@
 # VCF 9.1.1 air-gap:Supervisor + VKS 部署實作(VDS + Foundation Load Balancer)
 
-> ✅ **2026-09-22 ~ 09-23 nested lab 端到端實測通過**
+> ✅ **2026-09-22 ~ 09-23 nested lab 端到端實測通過**(09-29 補:OCI 上傳已依官方要求關回唯讀)
 > Supervisor `RUNNING`/`READY` → VKS guest cluster `v1.36.2+vmware.2` → cert-manager 1.20.2 從**自建 Software Depot** 安裝完成,guest cluster 全程無外網。
 >
 > 完整圖文版:[`VCF911-VKS-AirGap-StepByStep.docx`](VCF911-VKS-AirGap-StepByStep.docx)(23 頁 / 13 張 UI 截圖)
@@ -170,8 +170,38 @@ imgpkg: Error: POST https://<fleet>/v2/.../blobs/uploads/: unexpected status cod
 #         {"spec":{"configuration":{"oci":{"offlineWriteEnabled":true}}}}
 ```
 
-> ⚠ 官方要求**上傳完成後再跑一次 `disable`** —— 這個上傳通道沒有認證。
 > ⚠ Git-Bash 執行時**不要**設 `MSYS_NO_PATHCONV=1`,否則 curl 讀不到 `/tmp` 的 payload 檔。
+
+### Step 6b — 搬完映像後關回去(必做)
+
+這個上傳通道**沒有認證**,官方要求所有映像上傳完成後立刻關閉:
+
+```bash
+./toggle_software_depot_oci_image_upload.sh disable \
+    --vsp-host <vsp-fqdn> --admin-username admin --admin-password '<password>'
+# → Software Depot config update is success!
+```
+
+關閉後**只擋寫、不擋讀**,已上傳的映像照常供應 —— 本 lab 實測:
+
+| 驗證 | 結果 |
+|---|---|
+| `GET /v2/` | `200` —— registry 仍在 |
+| `GET /v2/_catalog` | `200`,`vks-standard-packages/ga/3.7.0-20260618/vks-addons` 仍列出 |
+| `POST /v2/.../blobs/uploads/` | **`405 Method Not Allowed`** —— 推送已封 |
+| guest cluster 的 PackageRepository | `Reconcile succeeded` —— 照樣 pull 得到 |
+| cert-manager pods | 3 個都 `1/1 Running` |
+
+```bash
+# 驗證指令
+curl -sk -o /dev/null -w '%{http_code}\n' https://<fleet-fqdn>/v2/                      # 200
+curl -sk https://<fleet-fqdn>/v2/_catalog                                               # 仍列出 repo
+curl -sk -o /dev/null -w '%{http_code}\n' -X POST \
+     https://<fleet-fqdn>/v2/<repo>/blobs/uploads/                                      # 405
+kubectl get pkgr -n tkg-system                                                          # Reconcile succeeded
+```
+
+> 之後要再搬新映像(Harbor Supervisor Service、升級 VKS Standard Packages…),就再 `enable` → 搬 → `disable`。
 
 ## Step 7 — 搬移 VKS Standard Packages 的 OCI 映像
 

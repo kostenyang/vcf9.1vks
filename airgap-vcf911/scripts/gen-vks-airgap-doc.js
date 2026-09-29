@@ -100,6 +100,7 @@ const doc = new Document({
     BULLET('VKS guest cluster vks-cl01:v1.36.2+vmware.2,control plane 1 + worker 1,節點取得 workload 網段 IP。'),
     BULLET('cert-manager 1.20.2 由「自建 depot 的 OCI registry」安裝完成,guest cluster 全程無外網。'),
     BULLET('VKr 1.36.2 與 1.35.6 已鏡像進自建 depot(5.9 GB),並以「訂閱式 content library」供 vCenter 同步。'),
+    BULLET('收尾:Software Depot 的 OCI 上傳已依官方要求關回唯讀(推送 405、讀取與 pull 不受影響)。'),
     H2('與官方文件的差異'),
     table(['項目', '官方 air-gapped-vcf91.md', '本次實作'],
       [['VKr 來源', 'wp-content.broadcom.com/v2/latest/(Bastion 下載後手動上傳)', '用 depot token 鏡像進自建 depot,再以訂閱式 CL 自動同步(免手動上傳)'],
@@ -248,6 +249,13 @@ const doc = new Document({
        + 'Software Depot config update is success!'),
     NOTE('⚠ 官方明確要求:所有映像上傳完成後,要再跑一次 disable 關掉 —— 因為這個上傳通道**沒有認證**。', 'FFF6E5', C.amber),
     NOTE('Windows / Git-Bash 執行這個腳本時不要設 MSYS_NO_PATHCONV=1,否則 curl 讀不到 /tmp 的 payload 檔(Failed to open)。', 'FFF6E5', C.amber),
+    H2('8.1 Step 6b:搬完映像後關回去(必做)'),
+    P("這個上傳通道沒有認證,官方要求所有映像上傳完成後立刻關閉。關閉後只擋寫、不擋讀,已上傳的映像照常供應。"),
+    CODE("./toggle_software_depot_oci_image_upload.sh disable \\\n    --vsp-host <vsp-fqdn> --admin-username admin --admin-password '<password>'\n→ Software Depot config update is success!\n\n# 驗證(關閉後只擋寫、不擋讀)\ncurl -sk -o /dev/null -w '%{http_code}\\n' https://<fleet-fqdn>/v2/                 # 200\ncurl -sk https://<fleet-fqdn>/v2/_catalog                                         # 仍列出 repo\ncurl -sk -o /dev/null -w '%{http_code}\\n' -X POST \\\n     https://<fleet-fqdn>/v2/<repo>/blobs/uploads/                                # 405\nkubectl get pkgr -n tkg-system                                                    # Reconcile succeeded"),
+    table(['驗證', '結果'],
+      [["GET /v2/", "200 —— registry 仍在"], ["GET /v2/_catalog", "200,vks-standard-packages/ga/3.7.0-20260618/vks-addons 仍列出"], ["POST /v2/.../blobs/uploads/", "405 Method Not Allowed —— 推送已封"], ["guest cluster 的 PackageRepository", "Reconcile succeeded —— 照樣 pull 得到"], ["cert-manager pods", "3 個都 1/1 Running"]],
+      [38, 62]),
+    NOTE("之後要再搬新映像(Harbor Supervisor Service、升級 VKS Standard Packages…),就再 enable → 搬 → disable。", 'E8F5E9', C.green),
     PB(),
 
     // 九
