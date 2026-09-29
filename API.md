@@ -4,17 +4,17 @@
 Supervisor kube API（建 Cluster CR）。對應 PowerShell（`common/`）與 Python（`python/`）。
 
 > Lab 值：vCenter `192.168.114.11`、NSX `192.168.114.13`、Supervisor API `192.168.114.132`，
-> 帳密 `administrator@vsphere.local` / `admin` ＋ `<REDACTED-lab-password>`（lab）。
+> 帳密 `administrator@vsphere.local`(vCenter)/ `admin`(NSX);密碼一律由環境變數 `$VCPASS` / `$NSXPASS` 帶入,勿寫死在檔案裡。
 
 ## 0. 認證 token
 ```bash
 # vCenter session id
-SID=$(curl -sk -u 'administrator@vsphere.local:<REDACTED-lab-password>' -X POST \
+SID=$(curl -sk -u "administrator@vsphere.local:${VCPASS}" -X POST \
   https://192.168.114.11/api/session | tr -d '"')
 VC=(-sk -H "vmware-api-session-id: $SID" -H "Content-Type: application/json")
 
 # NSX 用 basic auth
-NSX=(-sk -u 'admin:<REDACTED-lab-password>' -H "Content-Type: application/json")
+NSX=(-sk -u "admin:${NSXPASS}" -H "Content-Type: application/json")
 ```
 
 ## 1. NSX：IP blocks + VPC connectivity profile（DTGW）

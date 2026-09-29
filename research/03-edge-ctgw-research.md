@@ -83,7 +83,7 @@ POST /v1/edge-clusters
   "tier1Name": "vcf-m02-t1"
 }
 ```
-auth：`POST /v1/tokens`（administrator@vsphere.local / <REDACTED-lab-password>）拿 Bearer。
+auth：`POST /v1/tokens`（administrator@vsphere.local / $VCPASS）拿 Bearer。
 
 > lab IP 對應 inventory：edge mgmt .70/.71、uplink .72/.73、TEP 117.28-31、TEP VLAN 117、uplink VLAN 114。
 > lab T0 用 STATIC routing（無 BGP peer），所以 uplink 不填 asnPeer 也可，T0 設 static default route 指 .254。

@@ -23,7 +23,7 @@ pwsh ./Step1b-Setup-Centralized-TGW.ps1    # 改 TGW centralized + VPC profile
 ## PowerCLI 角色：取值 + 驗證
 
 ```powershell
-Connect-VIServer 192.168.114.11 -User administrator@vsphere.local -Password '<REDACTED-lab-password>'
+Connect-VIServer 192.168.114.11 -User administrator@vsphere.local -Password $env:VCPASS
 # edge 部署目標 cluster moref（SDDC API 用 cluster id，不是 moref，但驗證用）
 Get-Cluster 'vcf-m02-cl01'
 Get-Datastore | ? Name -match vsan

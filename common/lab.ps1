@@ -5,10 +5,10 @@
 # ── Lab 連線 ──────────────────────────────────────────────────────────────────
 $global:VC      = '192.168.114.11'              # inner vCenter (kosten-vcf91-vc)
 $global:VCUSER  = 'administrator@vsphere.local'
-$global:VCPASS  = '<REDACTED-lab-password>'
+$global:VCPASS  = $env:VCPASS    # 由環境變數帶入,勿寫死
 $global:NSXVIP  = '192.168.114.13'              # NSX Manager VIP
 $global:NSXUSER = 'admin'
-$global:NSXPASS = '<REDACTED-lab-password>'
+$global:NSXPASS = $env:NSXPASS   # 由環境變數帶入,勿寫死
 $global:SDDC    = '192.168.114.10'              # SDDC Manager
 $global:CLUSTER_NAME = 'vcf-m02-cl01'
 

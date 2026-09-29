@@ -10,7 +10,7 @@
 > 建 VKS cluster `vks-auto-01`（v1.34.2，CP+worker 都 Ready）。踩坑與修正見
 > [research/05](research/05-test-execution.md)。
 
-> ⚠️ 本 repo 為私有 lab 用途，內含明文 lab 密碼（`<REDACTED-lab-password>`）。正式環境請改掉
+> ⚠️ 本 repo 為私有 lab 用途。**不得寫入任何明文密碼** —— 帳密一律走環境變數
 > （Python 的 `python/lab.py` 已支援用環境變數覆寫）。
 
 ---

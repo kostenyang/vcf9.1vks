@@ -49,7 +49,7 @@ ssh root@10.0.0.61 'cd /data/tkr && tar xzf vks-tkr-v1.30.1.tgz'
 目標 = Supervisor 所在的**內層 vCenter `vcf-m02-vc01`**。設 govc env → 建 **Local** CL → import。
 
 ```bash
-export GOVC_URL='https://administrator@vsphere.local:<REDACTED-lab-password>@vcf-m02-vc01.home.lab'
+export GOVC_URL="https://administrator@vsphere.local:${VCPASS}@vcf-m02-vc01.home.lab"   # VCPASS 由環境變數帶入
 export GOVC_INSECURE=1
 
 # 建 Local content library(要指定 datastore = 內層 vSAN)
@@ -122,7 +122,7 @@ kubectl get tkc,cluster,machine -n ns-vks       # nodes Ready、antrea 從 OVA c
 ## 無 server 完整步驟(實測 OK)
 ```bash
 export MSYS_NO_PATHCONV=1          # 🔴 Git-Bash 必加,否則 /lib/item 路徑被 MSYS 轉成 C:/Program Files/Git/...
-export GOVC_URL='https://administrator@vsphere.local:<REDACTED-lab-password>@10.0.1.19'
+export GOVC_URL="https://administrator@vsphere.local:${VCPASS}@10.0.1.19"   # VCPASS 由環境變數帶入
 export GOVC_INSECURE=1
 # 解壓 zip 後(得 supervisor-9.1.0.0200-25573614/ + spherelet-v1.30/31/32/)
 govc library.create -ds m01-cl01-ds-vsan01 supervisor-local          # 建 Local CL

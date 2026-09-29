@@ -159,7 +159,7 @@ PATCH /policy/api/v1/infra/ip-blocks/{id}
 ## 怎麼自己撈最新 schema
 
 ```bash
-curl -sk -u 'admin:<REDACTED-lab-password>' \
+curl -sk -u "admin:${NSXPASS}" \
   "https://192.168.114.13/policy/api/v1/spec/openapi/nsx_policy_api.json" -o nsx.json
 # 解 allOf 繼承後印某個 definition 的欄位（Windows py）：
 py -c "import json;d=json.load(open('nsx.json'))['definitions'];print(list(d['VpcServiceGatewayConfig']['properties']))"

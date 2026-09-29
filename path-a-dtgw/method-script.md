@@ -11,7 +11,7 @@ PowerCLI 對 NSX VPC / VNA **沒有原生 cmdlet**，所以 DTGW 路線的 NSX �
 ```powershell
 Import-Module VMware.VimAutomation.Core
 Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope Session
-Connect-VIServer 192.168.114.11 -User administrator@vsphere.local -Password '<REDACTED-lab-password>'
+Connect-VIServer 192.168.114.11 -User administrator@vsphere.local -Password $env:VCPASS
 
 # cluster moref（填 vm_deployment_config.cluster_or_resource_pool_id）
 (Get-Cluster 'vcf-m02-cl01').ExtensionData.MoRef.Value          # e.g. domain-cXX

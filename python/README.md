@@ -11,8 +11,8 @@ pip install -r requirements.txt
 ## 設定
 連線參數在 `lab.py`，預設值 = 本 lab（2026-06-08 實機）。可用環境變數覆寫：
 ```bash
-export VC=192.168.114.11 VCUSER=administrator@vsphere.local VCPASS='<REDACTED-lab-password>'
-export NSXVIP=192.168.114.13 NSXUSER=admin NSXPASS='<REDACTED-lab-password>'
+export VC=192.168.114.11 VCUSER=administrator@vsphere.local VCPASS='<vcenter-password>'
+export NSXVIP=192.168.114.13 NSXUSER=admin NSXPASS='<nsx-password>'
 ```
 
 ## 流程（DTGW 路線）

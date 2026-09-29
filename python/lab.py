@@ -25,10 +25,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ── Lab 連線 ──────────────────────────────────────────────────────────────────
 VC      = os.environ.get("VC",      "192.168.114.11")   # inner vCenter (kosten-vcf91-vc)
 VCUSER  = os.environ.get("VCUSER",  "administrator@vsphere.local")
-VCPASS  = os.environ.get("VCPASS",  "<REDACTED-lab-password>")
+VCPASS  = os.environ["VCPASS"]      # 必填:勿寫死密碼
 NSXVIP  = os.environ.get("NSXVIP",  "192.168.114.13")   # NSX Manager VIP
 NSXUSER = os.environ.get("NSXUSER", "admin")
-NSXPASS = os.environ.get("NSXPASS", "<REDACTED-lab-password>")
+NSXPASS = os.environ["NSXPASS"]     # 必填:勿寫死密碼
 SDDC    = os.environ.get("SDDC",    "192.168.114.10")   # SDDC Manager
 CLUSTER_NAME = "vcf-m02-cl01"
 
