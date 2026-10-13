@@ -1,0 +1,76 @@
+# Pod 掛 NFS PVC — 完整範例（靜態 PV + PVC + Pod）
+#
+# 用法:
+#   1. 改 PV 的 nfs.server / nfs.path（下面標 ### CHANGE ME 的兩行）
+#   2. kubectl apply -f nfs-pv-pvc-pod.yaml
+#   3. kubectl exec -it nfs-demo -- sh -c 'echo hi > /data/hello && ls -l /data'
+#
+# NFS server 端前提:
+#   - export 要放行「所有 K8s 節點 IP」(mount 是 kubelet 在節點上做的, 不是 pod)
+#     例: /export/app  172.24.14.0/24(rw,sync,no_root_squash,no_subtree_check)
+#   - 2049/tcp (NFSv4) 要通; 用 NFSv3 另加 111 與 mountd
+#
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-nfs-pv
+  labels:
+    app: nfs-demo
+spec:
+  capacity:
+    storage: 100Gi                     # NFS 不會真的限制, 只是帳面值, 但 PVC 的 request 不能大於它
+  accessModes:
+    - ReadWriteMany                    # NFS 可以多 pod 同時讀寫
+  persistentVolumeReclaimPolicy: Retain  # 刪 PVC 時不要動 NFS 上的資料
+  storageClassName: nfs-static         # 自訂名字; 不能留給預設 StorageClass (那會去開 vSphere 碟)
+  volumeMode: Filesystem
+  mountOptions:
+    - nfsvers=4.1
+    - hard
+    - noresvport
+  nfs:
+    server: 192.0.2.10                 ### CHANGE ME — NFS server IP 或 FQDN
+    path: /export/app                  ### CHANGE ME — export 路徑
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-nfs-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany                    # 要跟 PV 一樣
+  storageClassName: nfs-static         # 要跟 PV 一樣
+  volumeName: app-nfs-pv               # 直接綁定這顆 PV, 避免被同 SC 的其他 PV 搶走
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfs-demo
+  namespace: default
+  labels:
+    app: nfs-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command: ["sh", "-c", "echo \"$(date) $(hostname)\" >> /data/visits.log; tail -f /dev/null"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: app-nfs-pvc

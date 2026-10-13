@@ -148,3 +148,9 @@ VCF 9.1 的 NSX VPC 網路有兩種 Transit Gateway 連線模型，VKS Superviso
 [`airgap-vcf911/`](airgap-vcf911/) — 在完全離線的 **VCF 9.1.1** 上啟用 Supervisor(VDS + **Foundation Load Balancer**,不用 Avi)、
 開 VKS guest cluster(v1.36.2),並用**自建 Software Depot 的 OCI registry** 安裝 VKS Standard Packages(cert-manager)。
 Step 1~9 全程截圖,含 23 頁 docx 手冊與可重跑腳本。
+
+## Pod 掛 NFS PVC(2026-10 新增)
+
+[`nfs-pvc/`](nfs-pvc/) — VKS 預設 StorageClass 只開 vSphere block volume,要用 NFS 得自己寫 PV。
+[`nfs-pv-pvc-pod.yaml`](nfs-pvc/nfs-pv-pvc-pod.yaml) 是 PV + PVC + Pod 三合一、改兩行就能 `kubectl apply` 的範例;
+[`README.md`](nfs-pvc/README.md) 說明跟預設 PVC 的差別、NFS server 端前提(export 要放行所有節點 IP)與常見錯誤對照。
